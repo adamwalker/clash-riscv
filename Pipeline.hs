@@ -33,7 +33,8 @@ calcForwardingAddress sourceAddr instr_2 instr_3
     | otherwise                                                   = NoForwarding
 
 data FromInstructionMem = FromInstructionMem {
-    instruction :: BitVector 32
+    instruction      :: BitVector 32,
+    instructionStall :: Bool
 }
 
 data ToInstructionMem = ToInstructionMem {
@@ -64,7 +65,7 @@ system program = pipelineState
         ((/=0) . writeStrobe <$> toDataMem) 
         (writeData   <$> toDataMem)
     --The processor
-    (toInstructionMem, toDataMem, pipelineState) = pipeline (FromInstructionMem <$> instr_0) (FromDataMem <$> memReadData_3')
+    (toInstructionMem, toDataMem, pipelineState) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
 
 pipeline 
     :: Signal FromInstructionMem 
@@ -106,7 +107,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
 
     --inject nops for all branches and jumps because they are assumed taken
     --Also inject NOP for branch predicted incorrectly
-    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (not1 branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2) 0 instr_0'
+    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (not1 branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0'
 
     ---------------------------------------------
     --Stage 1
