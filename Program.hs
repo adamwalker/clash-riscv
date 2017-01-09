@@ -73,10 +73,11 @@ miscInstrs = [
 
 stall :: [Instr]
 stall = [
+        RIInstr     $ LUI   (Word20 0x12345) X25,
+        RIInstr     $ IInstr ADDI (Word12 0x678) X25 X25,
+        MemoryInstr $ STORE Word (Word12 16) X25 X0,
         --Load followed by ALU op
         MemoryInstr $ LOAD  (Width Word) (Word12 16) X0 X15,
-        --TODO: add the ability to stall so this NOP isn't needed
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X0,
         RIInstr     $ IInstr ADDI (Word12 5) X15 X16
     ]
 
@@ -137,16 +138,19 @@ recursiveFib = [
 
         -- The base cases
         -- 0
+        -- PC: 4
         BranchInstr $ Branch (Word12 3) BNE X0 X2,
         RIInstr     $ IInstr ADDI (Word12 0) X0 X4,
         JumpInstr   $ JALR   (Word12 0)  X3 X0 ,
 
         -- 1
+        -- PC: 7
         RIInstr     $ IInstr ADDI (Word12 (-1)) X2 X6,
         BranchInstr $ Branch (Word12 3) BNE X0 X6,
         RIInstr     $ IInstr ADDI (Word12 1) X0 X4,
         JumpInstr   $ JALR   (Word12 0)  X3 X0 ,
 
+        -- PC:11
         --Adjust the stack pointer to make space for our local variables
         RIInstr     $ IInstr ADDI (Word12 12) X1 X1,
         --Save the argument and return address
@@ -160,19 +164,16 @@ recursiveFib = [
         MemoryInstr $ STORE  Word (Word12 (-4)) X4 X1,
         --Restore the argument to this function
         MemoryInstr $ LOAD   (Width Word) (Word12 (-12)) X1 X2,
-        RRInstr     $ RInstr ADD X0 X0 X0,
         --Set the argument for the second recursive call
         RIInstr     $ IInstr ADDI (Word12 (-2)) X2 X2,
         --Make the second recursive call
-        JumpInstr   $ JAL    (Word20 (-16)) X3,
+        JumpInstr   $ JAL    (Word20 (-15)) X3,
         --Load the saved result from the first recursive call
         MemoryInstr $ LOAD   (Width Word) (Word12 (-4)) X1 X5,
-        RRInstr     $ RInstr ADD X0 X0 X0,
         --Add the results of the recursive call and put it in the result register
         RRInstr     $ RInstr ADD X4 X5 X4,
         --Restore the saved return address
         MemoryInstr $ LOAD   (Width Word) (Word12 (-8)) X1 X3,
-        RRInstr     $ RInstr ADD X0 X0 X0,
         --Put the stack pointer back
         RIInstr     $ IInstr ADDI (Word12 (-12)) X1 X1,
         --Return
@@ -189,6 +190,7 @@ program = concat [
         --jal,
         --jalr
         recursiveFib
+        --stall
     ]
 
 assembled :: [Word32]

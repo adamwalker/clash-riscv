@@ -83,9 +83,10 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     pc_0     =  register maxBound nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluRes_2
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluRes_2 <*> stallStage2OrEarlier
         where
-        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2
+        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 stall
+            | stall                              = currentPC
             --Branch predicted incorrectly - resume from branch PC plus 1
             | not branchTaken_2 && isBranching_2 = pc_2      + 1
             --Jumping via register - results is ready in ALU output - load it
@@ -115,8 +116,8 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     ---------------------------------------------
     
     --Delay the signals computed in stage 0
-    pc_1    = register 0 pc_0
-    instr_1 = register 0 instr_0
+    pc_1    = regEn 0 (not1 stallStage2OrEarlier) pc_0
+    instr_1 = regEn 0 (not1 stallStage2OrEarlier) instr_0
 
     --decode the register addresses and immediate
     rs1Addr_1, rs2Addr_1 :: Signal (Index 32)
@@ -153,9 +154,12 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     rs2Data_1    = readReg <$> theRegFile_1 <*> rs2Addr_1
 
     --Will either of the ALU operands be forwarded?
-    --Only forwarding from ALU for now
     forwardALUOp1_1 = calcForwardingAddress <$> rs1Addr_1 <*> instr_2 <*> instr_3
     forwardALUOp2_1 = calcForwardingAddress <$> rs2Addr_1 <*> instr_2 <*> instr_3
+
+    --When the preceeding instruction is a memory load to a register that is used by this instruction, we need to stall
+    --TODO: check if source registers are actualy used
+    memToAluHazard_1 = (((rs1 <$> instr_1) .==. (rd <$> instr_2)) .||. ((rs2 <$> instr_1) .==. (rd <$> instr_2))) .&&. (load <$> instr_2)
 
     stage1 
         =   D.Stage1 
@@ -180,24 +184,26 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     --Execute 
     ---------------------------------------------
 
-    --Delay the signals computed in stage 1
+    stallStage2OrEarlier   = memToAluHazard_1
+
+    --Delay the signals computed in stage 1 and insert bubbles in the relevant ones if we are stalled
     pc_2                   = register 0      pc_1
-    instr_2                = register 0      instr_1
+    instr_2                = register 0      $ mux stallStage2OrEarlier 0 instr_1
     rs1Data_2              = register 0      rs1Data_1
     rs2Data_2              = register 0      rs2Data_1
     aluOp1IsRegister_2     = register False  aluOp1IsRegister_1
     aluOp2IsRegister_2     = register False  aluOp2IsRegister_1
     imm_2                  = register 0      imm_1
+    --TODO: below 3 do not need to be pipelined
     primaryOp_2            = register ADDSUB primaryOp_1
     secondaryOp_2          = register False  secondaryOp_1
     compareOp_2            = register 0      compareOp_1
+    isBranching_2          = register False  $ mux stallStage2OrEarlier (pure False) isBranching_1
+    isJumpingViaRegister_2 = register False  $ mux stallStage2OrEarlier (pure False) isJumpingViaRegister_1
+    aluBypass_2            = register 0      aluBypass_1
+    bypassALU_2            = register False  bypassALU_1
     forwardALUOp1_2        = register NoForwarding forwardALUOp1_1
     forwardALUOp2_2        = register NoForwarding forwardALUOp2_1
-    isBranching_2          = register False isBranching_1
-    isJumpingViaRegister_2 = register False isJumpingViaRegister_1
-    --TODO: add to state
-    aluBypass_2            = register 0 aluBypass_1
-    bypassALU_2            = register False bypassALU_1
 
     --Is the next cycle a register write
     regWriteEn_2       = enableRegWrite <$> instr_2
@@ -269,13 +275,14 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     ---------------------------------------------
     
     --Delay the signals computed in stage 2
-    pc_3             = register 0     pc_2
-    instr_3          = register 0     instr_2
-    execRes_3        = register 0     execRes_2
-    rs2Data_3        = register 0     forwardedRs2
-    memWriteEnable_3 = register False memWriteEnable_2
-    regWriteEn_3     = register False regWriteEn_2
-    branchTaken_3    = register False branchTaken_2
+    pc_3                 = register 0     pc_2
+    instr_3              = register 0     instr_2
+    execRes_3            = register 0     execRes_2
+    rs2Data_3            = register 0     forwardedRs2
+    memWriteEnable_3     = register False memWriteEnable_2
+    regWriteEn_3         = register False regWriteEn_2
+    --TODO: remove
+    branchTaken_3        = register False branchTaken_2
     forwardMemToStage3_3 = register False forwardMemToStage3_2
 
     destRegSource_3  = decodeDestRegSource <$> instr_3

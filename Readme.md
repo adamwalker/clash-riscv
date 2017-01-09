@@ -17,9 +17,7 @@ Main.hs instantiates this design and simulates it on the program defined in Prog
 The sample program in Program.hs is a recursive function to calculate the ith element of the Fibonacci sequence. 
 
 ## TODO
-* Implement pipeline stalls 
-    * To avoid the hazard that arises when something is loaded from memory and is then immediately used
-    * To allow the instruction and data mem/cache to take more than one cycle
+* Implement data mem/cache stalls
 * Exceptions
     * Misaligned instruction fetch
     * Misaligned data memory access
