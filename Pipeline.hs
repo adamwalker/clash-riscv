@@ -38,7 +38,7 @@ data FromInstructionMem = FromInstructionMem {
 }
 
 data ToInstructionMem = ToInstructionMem {
-    instructionAddress :: Unsigned 32
+    instructionAddress :: Unsigned 30
 }
 
 data FromDataMem = FromDataMem {
@@ -71,7 +71,7 @@ pipeline
     :: Signal FromInstructionMem 
     -> Signal FromDataMem
     -> (Signal ToInstructionMem, Signal ToDataMem, Signal D.PipelineState)
-pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toDataMem, pipelineState)
+pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31 d2 . pack <$> nextPC_0, toDataMem, pipelineState)
     where
 
     ---------------------------------------------
@@ -80,23 +80,23 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     ---------------------------------------------
 
     pc_0     :: Signal (Unsigned 32)
-    pc_0     =  register maxBound nextPC_0
+    pc_0     =  register (-4) nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
     nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluRes_2 <*> stallStage2OrEarlier
         where
         calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 stall
             | stall                              = currentPC
-            --Branch predicted incorrectly - resume from branch PC plus 1
-            | not branchTaken_2 && isBranching_2 = pc_2      + 1
+            --Branch predicted incorrectly - resume from branch PC plus 4
+            | not branchTaken_2 && isBranching_2 = pc_2      + 4
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
-            | branch instr                       = pc_1      + unpack (signExtendImmediate (sbImm instr)) :: Unsigned 32
+            | branch instr                       = pc_1      + unpack (signExtendImmediate (sbImm instr)) `shiftL` 1 :: Unsigned 32
             --Jumps always taken
-            | jal    instr                       = pc_1      + unpack (signExtendImmediate (ujImm instr)) :: Unsigned 32
+            | jal    instr                       = pc_1      + unpack (signExtendImmediate (ujImm instr)) `shiftL` 1 :: Unsigned 32
             --Business as usual
-            | otherwise                          = currentPC + 1
+            | otherwise                          = currentPC + 4
 
     instr_0' = instruction <$> fromInstructionMem
 
@@ -126,7 +126,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem <$> nextPC_0, toData
     imm_1     = extractImmediate <$> instr_1
 
     --The ALU bypass
-    aluBypass_1 = mux (lui <$> instr_1) (alignUpperImmediate . uImm <$> instr_1) ((pack . (+1)) <$> pc_1)
+    aluBypass_1 = mux (lui <$> instr_1) (alignUpperImmediate . uImm <$> instr_1) ((pack . (+ 4)) <$> pc_1)
     bypassALU_1 = lui <$> instr_1 .||. jalr <$> instr_1 .||. jal <$> instr_1 
 
     --is this instruction a jump, and we therefore need to replace the previous stage with a bubble
