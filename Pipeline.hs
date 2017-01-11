@@ -135,18 +135,11 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     isJumpingViaRegister_1 = jalr <$> instr_1
     isBranching_1          = branch <$> instr_1
 
-    --decode the alu operation 
-    primaryOp_1   = decodeAluPrimaryOp   <$> instr_1
-    secondaryOp_1 = decodeAluSecondaryOp <$> instr_1
-
     --Figure out where the first ALU operand comes from
     aluOp1IsRegister_1 = firstOpIsRegister <$> instr_1
 
     --Figure out where the second ALU operand comes from
     aluOp2IsRegister_1 = secondOpIsRegister <$> instr_1
-
-    --Extract the comparison operator 
-    compareOp_1 = extractBranchType <$> instr_1
 
     --The regfile
     theRegFile_1 = regFile rdAddr_4 regWriteEn_4 rdData_4
@@ -168,11 +161,8 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
         <*> rs1Addr_1
         <*> rs2Addr_1
         <*> imm_1
-        <*> primaryOp_1
-        <*> secondaryOp_1
         <*> aluOp1IsRegister_1
         <*> aluOp2IsRegister_1
-        <*> compareOp_1
         <*> theRegFile_1
         <*> rs1Data_1
         <*> rs2Data_1
@@ -194,16 +184,18 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     aluOp1IsRegister_2     = register False  aluOp1IsRegister_1
     aluOp2IsRegister_2     = register False  aluOp2IsRegister_1
     imm_2                  = register 0      imm_1
-    --TODO: below 3 do not need to be pipelined
-    primaryOp_2            = register ADDSUB primaryOp_1
-    secondaryOp_2          = register False  secondaryOp_1
-    compareOp_2            = register 0      compareOp_1
     isBranching_2          = register False  $ mux stallStage2OrEarlier (pure False) isBranching_1
     isJumpingViaRegister_2 = register False  $ mux stallStage2OrEarlier (pure False) isJumpingViaRegister_1
     aluBypass_2            = register 0      aluBypass_1
     bypassALU_2            = register False  bypassALU_1
     forwardALUOp1_2        = register NoForwarding forwardALUOp1_1
     forwardALUOp2_2        = register NoForwarding forwardALUOp2_1
+
+    --decode the alu operation 
+    primaryOp_2   = decodeAluPrimaryOp   <$> instr_2
+    secondaryOp_2 = decodeAluSecondaryOp <$> instr_2
+    --Extract the comparison operator 
+    compareOp_2   = extractBranchType <$> instr_2
 
     --Is the next cycle a register write
     regWriteEn_2       = enableRegWrite <$> instr_2
@@ -281,8 +273,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     rs2Data_3            = register 0     forwardedRs2
     memWriteEnable_3     = register False memWriteEnable_2
     regWriteEn_3         = register False regWriteEn_2
-    --TODO: remove
-    branchTaken_3        = register False branchTaken_2
     forwardMemToStage3_3 = register False forwardMemToStage3_2
 
     destRegSource_3  = decodeDestRegSource <$> instr_3
@@ -315,7 +305,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
         <*> rs2Data_3
         <*> memWriteEnable_3
         <*> regWriteEn_3
-        <*> branchTaken_3
         <*> forwardMemToStage3_3
         <*> destRegSource_3
         <*> memReadData_3
@@ -334,7 +323,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     regWriteEn_4    = register False regWriteEn_3
     destRegSource_4 = register SourceALU destRegSource_3
     memReadData_4   = register 0 memReadData_3
-    branchTaken_4   = register False branchTaken_3
 
     --Special registers
     cycle, time, retired :: Signal (BitVector 64)
@@ -369,7 +357,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
         <*> regWriteEn_4
         <*> destRegSource_4
         <*> memReadData_4
-        <*> branchTaken_4
         <*> rdData_4
 
     pipelineState 

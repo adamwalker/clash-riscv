@@ -36,11 +36,8 @@ data Stage1 = Stage1 {
     rs1Addr_1          :: Index 32,
     rs2Addr_1          :: Index 32,
     imm_1              :: BitVector 32,
-    primaryOp_1        :: PrimaryOp,
-    secondaryOp_1      :: SecondaryOp,
     aluOp1IsRegister_1 :: Bool,
     aluOp2IsRegister_1 :: Bool,
-    compareOp_1        :: BitVector 3,
     theRegFile_1       :: Vec 32 (BitVector 32),
     rs1Data_1          :: BitVector 32,
     rs2Data_1          :: BitVector 32,
@@ -62,11 +59,8 @@ prettyStage1 Stage1{..} = Text.intercalate "\n" [
         "rs1Addr_1:          " <> Text.pack (show rs1Addr_1),
         "rs2Addr_1:          " <> Text.pack (show rs2Addr_1),
         "imm_1:              " <> Text.pack (show imm_1),
-        "primaryOp_1:        " <> Text.pack (show primaryOp_1),
-        "secondaryOp_1:      " <> Text.pack (show secondaryOp_1),
         "aluOp1IsRegister_1: " <> Text.pack (show aluOp1IsRegister_1),
         "aluOp2IsRegister_1: " <> Text.pack (show aluOp2IsRegister_1),
-        "compareOp_1:        " <> Text.pack (show compareOp_1),
         "rs1Data_1:          " <> Text.pack (show rs1Data_1),
         "rs2Data_1:          " <> Text.pack (show rs2Data_1),
         "forwardALUOp1_1:    " <> Text.pack (show forwardALUOp1_1),
@@ -127,7 +121,6 @@ data Stage3 = Stage3 {
     rs2Data_3        :: BitVector 32,
     memWriteEnable_3 :: Bool,
     regWriteEn_3     :: Bool,
-    branchTaken_3    :: Bool,
     forwardMemToStage3_3 :: Bool,
 
     destRegSource_3  :: DestRegSource,
@@ -142,7 +135,6 @@ prettyStage3 Stage3{..} = Text.intercalate "\n" [
         "memWriteEnable_3:   " <> Text.pack (show memWriteEnable_3),
         "regWriteEn_3:       " <> Text.pack (show regWriteEn_3),
         "execRes_3:          " <> Text.pack (show execRes_3),
-        "branchTaken_3:      " <> Text.pack (show branchTaken_3),
         "rs2Data_3:          " <> Text.pack (show rs2Data_3),
         "forwardMemToStage3_3: " <> Text.pack (show forwardMemToStage3_3),
 
@@ -159,7 +151,6 @@ data Stage4 = Stage4 {
     regWriteEn_4    :: Bool,
     destRegSource_4 :: DestRegSource,
     memReadData_4   :: BitVector 32,
-    branchTaken_4   :: Bool,
     rdData_4        :: BitVector 32
 } deriving (Show)
 
@@ -169,7 +160,6 @@ prettyStage4 Stage4{..} = Text.intercalate "\n" [
         "pc_4:               " <> Text.pack (show pc_4),
         "regWriteEn_4:       " <> Text.pack (show regWriteEn_4),
         "execRes_4:          " <> Text.pack (show execRes_4),
-        "branchTaken_4:      " <> Text.pack (show branchTaken_4),
         "destRegSource_4:    " <> Text.pack (show destRegSource_4),
         "memReadData_4:      " <> Text.pack (show memReadData_4),
 
