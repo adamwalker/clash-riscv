@@ -126,6 +126,12 @@ The second operand to the ALU can come from
 -}
 secondOpIsRegister = rType
 
+--Does the instruction actually use r1
+usesRegister1 instr = rType instr || iType instr || jalr instr || branch instr || store instr --TODO: check this
+
+--Does the instruction actually use r2
+usesRegister2 instr = rType instr || branch instr
+
 --A memory write only happens for store instructions
 enableMemWrite = store
 

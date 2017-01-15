@@ -151,8 +151,12 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     forwardALUOp2_1 = calcForwardingAddress <$> rs2Addr_1 <*> instr_2 <*> instr_3
 
     --When the preceeding instruction is a memory load to a register that is used by this instruction, we need to stall
-    --TODO: check if source registers are actualy used
-    memToAluHazard_1 = (((rs1 <$> instr_1) .==. (rd <$> instr_2)) .||. ((rs2 <$> instr_1) .==. (rd <$> instr_2))) .&&. (load <$> instr_2)
+    memToAluHazard_1 
+        =   (
+                 (((rs1 <$> instr_1) .==. (rd <$> instr_2)) .&&. (usesRegister1 <$> instr_1)) --The previous instruction is writing rs1 and rs1 is used by this instruction
+            .||. (((rs2 <$> instr_1) .==. (rd <$> instr_2)) .&&. (usesRegister2 <$> instr_1)) --The previous instruction is writing rs2 and rs2 is used by this instruction
+            ) 
+        .&&. (load <$> instr_2)                            --And, the previous instruction is a memory load
 
     stage1 
         =   D.Stage1 
@@ -276,7 +280,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     forwardMemToStage3_3 = register False forwardMemToStage3_2
 
     destRegSource_3  = decodeDestRegSource <$> instr_3
-    --TODO: add to debug
     memDataToWrite_3  = mux forwardMemToStage3_3 rdData_4 rs2Data_3
 
     --Extract the mem word addresses
@@ -286,7 +289,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     writeStrobe_3 = calcWriteStrobe <$> (extractMemSize <$> instr_3) <*> (slice d1 d0 <$> execRes_3)
 
     --The memory
-    --TODO: think about readNew
     memReadData_3' = memoryData <$> fromDataMem
     toDataMem      
         =   ToDataMem 
