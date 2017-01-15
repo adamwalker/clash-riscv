@@ -87,31 +87,33 @@ data Stage2 = Stage2 {
     branchTaken_2        :: Bool,
     forwardALUOp1_2      :: ForwardingSource,
     forwardALUOp2_2      :: ForwardingSource,
-    forwardMemToStage3_2 :: Bool
+    forwardMemToStage3_2 :: Bool,
+    forwardMemToStage2_2 :: Bool
 } deriving (Show)
 
 prettyStage2 :: Stage2 -> Text
 prettyStage2 Stage2{..} = Text.intercalate "\n" [
-        "instr_2:            " <> Text.pack (show instr_2),
-        "pc_2:               " <> Text.pack (show pc_2),
-        "imm_2:              " <> Text.pack (show imm_2),
-        "primaryOp_2:        " <> Text.pack (show primaryOp_2),
-        "secondaryOp_2:      " <> Text.pack (show secondaryOp_2),
-        "aluOp1IsRegister_2: " <> Text.pack (show aluOp1IsRegister_2),
-        "aluOp2IsRegister_2: " <> Text.pack (show aluOp2IsRegister_2),
-        "memWriteEnable_2:   " <> Text.pack (show memWriteEnable_2),
-        "regWriteEn_2:       " <> Text.pack (show regWriteEn_2),
-        "compareOp_2:        " <> Text.pack (show compareOp_2),
-        "rs1Data_2:          " <> Text.pack (show rs1Data_2),
-        "rs2Data_2:          " <> Text.pack (show rs2Data_2),
+        "instr_2:              " <> Text.pack (show instr_2),
+        "pc_2:                 " <> Text.pack (show pc_2),
+        "imm_2:                " <> Text.pack (show imm_2),
+        "primaryOp_2:          " <> Text.pack (show primaryOp_2),
+        "secondaryOp_2:        " <> Text.pack (show secondaryOp_2),
+        "aluOp1IsRegister_2:   " <> Text.pack (show aluOp1IsRegister_2),
+        "aluOp2IsRegister_2:   " <> Text.pack (show aluOp2IsRegister_2),
+        "memWriteEnable_2:     " <> Text.pack (show memWriteEnable_2),
+        "regWriteEn_2:         " <> Text.pack (show regWriteEn_2),
+        "compareOp_2:          " <> Text.pack (show compareOp_2),
+        "rs1Data_2:            " <> Text.pack (show rs1Data_2),
+        "rs2Data_2:            " <> Text.pack (show rs2Data_2),
 
-        "aluOperand1_2:      " <> Text.pack (show aluOperand1_2),
-        "aluOperand2_2:      " <> Text.pack (show aluOperand2_2),
-        "execRes_2:          " <> Text.pack (show execRes_2),
-        "branchTaken_2:      " <> Text.pack (show branchTaken_2),
-        "forwardALUOp1_2     " <> Text.pack (show forwardALUOp1_2),
-        "forwardALUOp2_2     " <> Text.pack (show forwardALUOp2_2),
-        "forwardMemToStage3_2: " <> Text.pack (show forwardMemToStage3_2)
+        "aluOperand1_2:        " <> Text.pack (show aluOperand1_2),
+        "aluOperand2_2:        " <> Text.pack (show aluOperand2_2),
+        "execRes_2:            " <> Text.pack (show execRes_2),
+        "branchTaken_2:        " <> Text.pack (show branchTaken_2),
+        "forwardALUOp1_2       " <> Text.pack (show forwardALUOp1_2),
+        "forwardALUOp2_2       " <> Text.pack (show forwardALUOp2_2),
+        "forwardMemToStage3_2: " <> Text.pack (show forwardMemToStage3_2),
+        "forwardMemToStage2_2: " <> Text.pack (show forwardMemToStage2_2)
     ]
 
 data Stage3 = Stage3 {

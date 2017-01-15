@@ -58,7 +58,6 @@ system program = pipelineState
     --The instruction memory
     instr_0 = firstCycleDef $ romPow2 program (resize . instructionAddress <$> toInstructionMem) --TODO: remove firstCycleDef
     --The data memory
-    --TODO: think about readNew
     memReadData_3' = firstCycleDef $ readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
         ((resize . writeAddress) <$> toDataMem) --write address
         ((resize . readAddress)  <$> toDataMem) --read address
@@ -209,8 +208,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --Mem stage input forwarding
     forwardMemToStage3_2 = (rs2 <$> instr_2) .==. (rd <$> instr_3) .&&. regWriteEn_3
-    --TODO: add to debug and pipeline to earlier stage
-    --TODO: maybe combine this with ALU forwarding
     forwardMemToStage2_2 = (rs2 <$> instr_2) .==. (rd <$> instr_4) .&&. regWriteEn_4
     forwardedRs2         = mux forwardMemToStage2_2 rdData_4 rs2Data_2
 
@@ -241,7 +238,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     execRes_2 = mux bypassALU_2 aluBypass_2 aluRes_2
 
     --The compare unit for branching
-    branchTaken_2 = branchCompare <$> compareOp_2 <*> effectiveR1_2 <*> effectiveR2_2 --TODO: rs2Data might have to be forwarded
+    branchTaken_2 = branchCompare <$> compareOp_2 <*> effectiveR1_2 <*> effectiveR2_2
 
     stage2 
         =   D.Stage2
@@ -264,6 +261,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
         <*> forwardALUOp1_2
         <*> forwardALUOp2_2
         <*> forwardMemToStage3_2
+        <*> forwardMemToStage2_2
 
     ---------------------------------------------
     --Stage 3
