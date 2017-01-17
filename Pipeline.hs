@@ -16,9 +16,6 @@ import Debug (ForwardingSource(..))
 
 {-# ANN module ("HLint: ignore Functor law" :: String) #-}
 
-topEntity :: Signal (Unsigned 32)
-topEntity = D.pc_0 . D.stage0 <$> system (repeat 0)
-
 firstCycleDef :: Default a => Signal a -> Signal a
 firstCycleDef = mealy step False
     where
@@ -65,6 +62,16 @@ system program = pipelineState
         (writeData   <$> toDataMem)
     --The processor
     (toInstructionMem, toDataMem, pipelineState) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
+
+{-# ANN topEntity
+  (defTop
+    { t_name     = "riscvPipeline"
+    , t_inputs   = ["instruction", "instructionStall", "memoryData"]
+    , t_outputs  = ["instructionAddress", "readAddress", "writeAddress", "writeData", "writeStrobe"]
+    }) #-}
+topEntity :: Signal FromInstructionMem -> Signal FromDataMem -> (Signal ToInstructionMem, Signal ToDataMem)
+topEntity fim fdm = (tim, tdm)
+    where (tim, tdm, _) = pipeline fim fdm
 
 pipeline 
     :: Signal FromInstructionMem 
