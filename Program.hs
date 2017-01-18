@@ -41,7 +41,7 @@ fib2 = [
         --Decrement the counter
         RIInstr     $ IInstr ADDI (Word12 (-1)) X3 X3,
         --Branch 
-        BranchInstr $ Branch (Word12 (-3)) BNE X3 X0
+        BranchInstr $ Branch (Word12 (-6)) BNE X3 X0
     ]
 
 loads :: [Instr]
