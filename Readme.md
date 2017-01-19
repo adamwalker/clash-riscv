@@ -18,12 +18,16 @@ The sample program in Program.hs is a recursive function to calculate the ith el
 
 The verilog-test directory contains a Verilog testbench which simulates the generated Verilog on the recursive Fibonacci program.
 
+## FPGA implementation
+
+Commit bcec694e meets timing on a Virtex 7 device at 270MHz.
+
 ## TODO
 * Implement data mem/cache stalls
 * Exceptions
     * Misaligned instruction fetch
     * Misaligned data memory access
 * Run the RiscV testsuite
-* Implement on FPGA and tweak to improve maximum frequency
+* Tweak to improve maximum frequency
 * DCache, ICache
 * Branch prediction
