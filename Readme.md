@@ -10,7 +10,9 @@ A RiscV processor implementing the RV32I instruction set written in [clash](http
 
 ## Navigation
 
-The top level design is in Pipeline.hs.
+The top level core is in Pipeline.hs.
+
+The core is instantiated with instruction and data memory in System.hs.
 
 Main.hs instantiates this design and simulates it on the program defined in Program.hs. 
 

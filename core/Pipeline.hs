@@ -16,19 +16,6 @@ import Debug (ForwardingSource(..))
 
 {-# ANN module ("HLint: ignore Functor law" :: String) #-}
 
-firstCycleDef :: Default a => Signal a -> Signal a
-firstCycleDef = mealy step False
-    where
-    step False _ = (True, def)
-    step True  x = (True, x)
-
-calcForwardingAddress :: Index 32 -> BitVector 32 -> BitVector 32 -> ForwardingSource
-calcForwardingAddress sourceAddr instr_2 instr_3
-    | sourceAddr == 0                                             = NoForwarding
-    | unpack (rd instr_2) == sourceAddr && enableRegWrite instr_2 = ForwardingSourceALU
-    | unpack (rd instr_3) == sourceAddr && enableRegWrite instr_3 = ForwardingSourceMem
-    | otherwise                                                   = NoForwarding
-
 data FromInstructionMem = FromInstructionMem {
     instruction      :: BitVector 32,
     instructionStall :: Bool
@@ -49,18 +36,12 @@ data ToDataMem = ToDataMem {
     writeStrobe  :: BitVector 4
 }
 
-system :: Vec (2 ^ 10) (BitVector 32) -> Signal D.PipelineState
-system program = pipelineState
-    where
-    --The instruction memory
-    instr_0 = firstCycleDef $ romPow2 program (resize . instructionAddress <$> toInstructionMem) --TODO: remove firstCycleDef
-    --The data memory
-    memReadData_3' = firstCycleDef $ readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
-        ((resize . readAddress)  <$> toDataMem) --read address
-        (mux ((/=0) . writeStrobe <$> toDataMem) (Just <$> bundle ((resize . writeAddress) <$> toDataMem, writeData <$> toDataMem)) (pure Nothing))
-        
-    --The processor
-    (toInstructionMem, toDataMem, pipelineState) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
+calcForwardingAddress :: Index 32 -> BitVector 32 -> BitVector 32 -> ForwardingSource
+calcForwardingAddress sourceAddr instr_2 instr_3
+    | sourceAddr == 0                                             = NoForwarding
+    | unpack (rd instr_2) == sourceAddr && enableRegWrite instr_2 = ForwardingSourceALU
+    | unpack (rd instr_3) == sourceAddr && enableRegWrite instr_3 = ForwardingSourceMem
+    | otherwise                                                   = NoForwarding
 
 {-# ANN topEntity
   (defTop
