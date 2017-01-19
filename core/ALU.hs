@@ -29,5 +29,6 @@ alu op sop x y = (addSub, alu' op sop x y)
     alu' XOR    _   x y = x `xor` y
     --alu SLL  x y = shiftL x (unpack $ slice d4 d0 y)
     --alu SR   x y = shiftR x (unpack $ slice d4 d0 y)
+    alu' SLL    _   x y = shiftL x (unpack $ resize $ slice d4 d0 y)
+    alu' SR     sop x y = shiftR x (unpack $ resize $ slice d4 d0 y)
     addSub = bool (x + y) (x - y) sop
-
