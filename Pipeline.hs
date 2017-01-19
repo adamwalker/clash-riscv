@@ -56,10 +56,9 @@ system program = pipelineState
     instr_0 = firstCycleDef $ romPow2 program (resize . instructionAddress <$> toInstructionMem) --TODO: remove firstCycleDef
     --The data memory
     memReadData_3' = firstCycleDef $ readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
-        ((resize . writeAddress) <$> toDataMem) --write address
         ((resize . readAddress)  <$> toDataMem) --read address
-        ((/=0) . writeStrobe <$> toDataMem) 
-        (writeData   <$> toDataMem)
+        (mux ((/=0) . writeStrobe <$> toDataMem) (Just <$> bundle ((resize . writeAddress) <$> toDataMem, writeData <$> toDataMem)) (pure Nothing))
+        
     --The processor
     (toInstructionMem, toDataMem, pipelineState) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
 
@@ -114,7 +113,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --inject nops for all branches and jumps because they are assumed taken
     --Also inject NOP for branch predicted incorrectly
-    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (not1 branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0'
+    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (fmap not branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0'
 
     ---------------------------------------------
     --Stage 1
@@ -122,8 +121,8 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     ---------------------------------------------
     
     --Delay the signals computed in stage 0
-    pc_1    = regEn 0 (not1 stallStage2OrEarlier) pc_0
-    instr_1 = regEn 0 (not1 stallStage2OrEarlier) instr_0
+    pc_1    = regEn 0 (fmap not stallStage2OrEarlier) pc_0
+    instr_1 = regEn 0 (fmap not stallStage2OrEarlier) instr_0
 
     --decode the register addresses and immediate
     rs1Addr_1, rs2Addr_1 :: Signal (Index 32)

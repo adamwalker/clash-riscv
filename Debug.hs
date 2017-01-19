@@ -7,6 +7,7 @@ import Prelude as P
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Monoid
+import Control.DeepSeq
 
 import ALU
 import Decode
@@ -176,6 +177,9 @@ data PipelineState = PipelineState {
     stage3 :: Stage3,
     stage4 :: Stage4
 } deriving (Show)
+
+instance NFData PipelineState where
+    rnf _ = ()
 
 prettyPipelineState :: PipelineState -> Text
 prettyPipelineState PipelineState{..} 
