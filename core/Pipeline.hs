@@ -69,14 +69,14 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     pc_0     =  register (-4) nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluRes_2 <*> stallStage2OrEarlier
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> jalrRes_2 <*> stallStage2OrEarlier
         where
-        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 stall
+        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 jalrRes_2 stall
             | stall                              = currentPC
             --Branch predicted incorrectly - resume from branch PC plus 4
             | not branchTaken_2 && isBranching_2 = pc_2      + 4
             --Jumping via register - results is ready in ALU output - load it
-            | isJumpingViaRegister_2             = unpack aluRes_2
+            | isJumpingViaRegister_2             = unpack jalrRes_2
             --Predict branches taken
             | branch instr                       = pc_1      + unpack (signExtendImmediate (sbImm instr)) `shiftL` 1 :: Unsigned 32
             --Jumps always taken
@@ -234,6 +234,9 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --The compare unit for branching
     branchTaken_2 = branchCompare <$> compareOp_2 <*> effectiveR1_2 <*> effectiveR2_2
+
+    --Register additions for JALR have a special case to reduce logic depth
+    jalrRes_2 = effectiveR1_2 + imm_2
 
     stage2 
         =   D.Stage2

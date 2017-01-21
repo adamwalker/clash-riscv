@@ -10,6 +10,7 @@ import Pipeline
 import Debug
 
 import Program
+import System
 
 assembledVec :: P.Vec 1024 (P.BitVector 32)
 assembledVec = $(P.listToVecTH assembled) P.++ P.repeat 0
