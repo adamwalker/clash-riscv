@@ -11,7 +11,7 @@ branchCompare opNeg x y
         0 -> x == y
         2 -> s x < s y
         3 -> u x < u y
-        _ -> x == y --TODO: remove
+        _ -> errorX "branchCompare"
     where
     negate =  slice d0 d0 opNeg
     op     =  slice d2 d1 opNeg

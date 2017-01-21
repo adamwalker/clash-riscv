@@ -74,7 +74,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
         where
         calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
             --Branch predicted incorrectly - resume from branch PC plus 4
-            | not branchTaken_2 && isBranching_2 = pc_2      + 4
+            | isBranching_2 && not branchTaken_2 = pc_2      + 4
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
@@ -96,7 +96,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --inject nops for all branches and jumps because they are assumed taken
     --Also inject NOP for branch predicted incorrectly
-    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (fmap not branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0''
+    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (isBranching_2 .&&. fmap not branchTaken_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0''
 
     ---------------------------------------------
     --Stage 1
