@@ -1,9 +1,9 @@
-{-# LANGUAGE DataKinds, RecordWildCards, OverloadedStrings #-}
+{-# LANGUAGE DataKinds, RecordWildCards, OverloadedStrings, DeriveGeneric, DeriveAnyClass #-}
 module Debug where
 
 import CLaSH.Prelude
 import Prelude as P
-
+import GHC.Generics
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Monoid
@@ -16,7 +16,7 @@ data ForwardingSource
     = ForwardingSourceALU
     | ForwardingSourceMem
     | NoForwarding
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, ShowX)
 
 data Stage0 = Stage0 {
     pc_0     :: Unsigned 32,
@@ -26,9 +26,9 @@ data Stage0 = Stage0 {
 
 prettyStage0 :: Stage0 -> Text
 prettyStage0 Stage0{..} = Text.intercalate "\n" [
-        "pc_0:     " <> Text.pack (show pc_0),
-        "nextPC_0: " <> Text.pack (show nextPC_0),
-        "instr_0:  " <> Text.pack (show instr_0)
+        "pc_0:     " <> Text.pack (showX pc_0),
+        "nextPC_0: " <> Text.pack (showX nextPC_0),
+        "instr_0:  " <> Text.pack (showX instr_0)
     ]
 
 data Stage1 = Stage1 {
@@ -49,23 +49,24 @@ data Stage1 = Stage1 {
 prettyRegFile :: Vec 32 (BitVector 32) -> Text
 prettyRegFile = Text.intercalate "\n" . P.zipWith prettyReg [0..] . toList
     where
-    prettyReg idx bv = Text.pack (show idx) <> ": " <> Text.pack (show bv) <> "(" <> Text.pack (show (unpack bv :: Unsigned 32)) <> ")"
+    prettyReg :: Index 32 -> BitVector 32 -> Text
+    prettyReg idx bv = Text.pack (showX idx) <> ": " <> Text.pack (showX bv) <> "(" <> Text.pack (showX (unpack bv :: Unsigned 32)) <> ")"
 
 prettyStage1 :: Stage1 -> Text
 prettyStage1 Stage1{..} = Text.intercalate "\n" [
         prettyRegFile theRegFile_1 <> "\n",
 
-        "instr_1:            " <> Text.pack (show instr_1),
-        "pc_1:               " <> Text.pack (show pc_1),
-        "rs1Addr_1:          " <> Text.pack (show rs1Addr_1),
-        "rs2Addr_1:          " <> Text.pack (show rs2Addr_1),
-        "imm_1:              " <> Text.pack (show imm_1),
-        "aluOp1IsRegister_1: " <> Text.pack (show aluOp1IsRegister_1),
-        "aluOp2IsRegister_1: " <> Text.pack (show aluOp2IsRegister_1),
-        "rs1Data_1:          " <> Text.pack (show rs1Data_1),
-        "rs2Data_1:          " <> Text.pack (show rs2Data_1),
-        "forwardALUOp1_1:    " <> Text.pack (show forwardALUOp1_1),
-        "forwardALUOp2_1:    " <> Text.pack (show forwardALUOp2_1)
+        "instr_1:            " <> Text.pack (showX instr_1),
+        "pc_1:               " <> Text.pack (showX pc_1),
+        "rs1Addr_1:          " <> Text.pack (showX rs1Addr_1),
+        "rs2Addr_1:          " <> Text.pack (showX rs2Addr_1),
+        "imm_1:              " <> Text.pack (showX imm_1),
+        "aluOp1IsRegister_1: " <> Text.pack (showX aluOp1IsRegister_1),
+        "aluOp2IsRegister_1: " <> Text.pack (showX aluOp2IsRegister_1),
+        "rs1Data_1:          " <> Text.pack (showX rs1Data_1),
+        "rs2Data_1:          " <> Text.pack (showX rs2Data_1),
+        "forwardALUOp1_1:    " <> Text.pack (showX forwardALUOp1_1),
+        "forwardALUOp2_1:    " <> Text.pack (showX forwardALUOp2_1)
     ]
 
 data Stage2 = Stage2 {
@@ -94,27 +95,27 @@ data Stage2 = Stage2 {
 
 prettyStage2 :: Stage2 -> Text
 prettyStage2 Stage2{..} = Text.intercalate "\n" [
-        "instr_2:              " <> Text.pack (show instr_2),
-        "pc_2:                 " <> Text.pack (show pc_2),
-        "imm_2:                " <> Text.pack (show imm_2),
-        "primaryOp_2:          " <> Text.pack (show primaryOp_2),
-        "secondaryOp_2:        " <> Text.pack (show secondaryOp_2),
-        "aluOp1IsRegister_2:   " <> Text.pack (show aluOp1IsRegister_2),
-        "aluOp2IsRegister_2:   " <> Text.pack (show aluOp2IsRegister_2),
-        "memWriteEnable_2:     " <> Text.pack (show memWriteEnable_2),
-        "regWriteEn_2:         " <> Text.pack (show regWriteEn_2),
-        "compareOp_2:          " <> Text.pack (show compareOp_2),
-        "rs1Data_2:            " <> Text.pack (show rs1Data_2),
-        "rs2Data_2:            " <> Text.pack (show rs2Data_2),
+        "instr_2:              " <> Text.pack (showX instr_2),
+        "pc_2:                 " <> Text.pack (showX pc_2),
+        "imm_2:                " <> Text.pack (showX imm_2),
+        "primaryOp_2:          " <> Text.pack (showX primaryOp_2),
+        "secondaryOp_2:        " <> Text.pack (showX secondaryOp_2),
+        "aluOp1IsRegister_2:   " <> Text.pack (showX aluOp1IsRegister_2),
+        "aluOp2IsRegister_2:   " <> Text.pack (showX aluOp2IsRegister_2),
+        "memWriteEnable_2:     " <> Text.pack (showX memWriteEnable_2),
+        "regWriteEn_2:         " <> Text.pack (showX regWriteEn_2),
+        "compareOp_2:          " <> Text.pack (showX compareOp_2),
+        "rs1Data_2:            " <> Text.pack (showX rs1Data_2),
+        "rs2Data_2:            " <> Text.pack (showX rs2Data_2),
 
-        "aluOperand1_2:        " <> Text.pack (show aluOperand1_2),
-        "aluOperand2_2:        " <> Text.pack (show aluOperand2_2),
-        "execRes_2:            " <> Text.pack (show execRes_2),
-        "branchTaken_2:        " <> Text.pack (show branchTaken_2),
-        "forwardALUOp1_2       " <> Text.pack (show forwardALUOp1_2),
-        "forwardALUOp2_2       " <> Text.pack (show forwardALUOp2_2),
-        "forwardMemToStage3_2: " <> Text.pack (show forwardMemToStage3_2),
-        "forwardMemToStage2_2: " <> Text.pack (show forwardMemToStage2_2)
+        "aluOperand1_2:        " <> Text.pack (showX aluOperand1_2),
+        "aluOperand2_2:        " <> Text.pack (showX aluOperand2_2),
+        "execRes_2:            " <> Text.pack (showX execRes_2),
+        "branchTaken_2:        " <> Text.pack (showX branchTaken_2),
+        "forwardALUOp1_2       " <> Text.pack (showX forwardALUOp1_2),
+        "forwardALUOp2_2       " <> Text.pack (showX forwardALUOp2_2),
+        "forwardMemToStage3_2: " <> Text.pack (showX forwardMemToStage3_2),
+        "forwardMemToStage2_2: " <> Text.pack (showX forwardMemToStage2_2)
     ]
 
 data Stage3 = Stage3 {
@@ -133,17 +134,17 @@ data Stage3 = Stage3 {
 
 prettyStage3 :: Stage3 -> Text
 prettyStage3 Stage3{..} = Text.intercalate "\n" [
-        "instr_3:            " <> Text.pack (show instr_3),
-        "pc_3:               " <> Text.pack (show pc_3),
-        "memWriteEnable_3:   " <> Text.pack (show memWriteEnable_3),
-        "regWriteEn_3:       " <> Text.pack (show regWriteEn_3),
-        "execRes_3:          " <> Text.pack (show execRes_3),
-        "rs2Data_3:          " <> Text.pack (show rs2Data_3),
-        "forwardMemToStage3_3: " <> Text.pack (show forwardMemToStage3_3),
+        "instr_3:            " <> Text.pack (showX instr_3),
+        "pc_3:               " <> Text.pack (showX pc_3),
+        "memWriteEnable_3:   " <> Text.pack (showX memWriteEnable_3),
+        "regWriteEn_3:       " <> Text.pack (showX regWriteEn_3),
+        "execRes_3:          " <> Text.pack (showX execRes_3),
+        "rs2Data_3:          " <> Text.pack (showX rs2Data_3),
+        "forwardMemToStage3_3: " <> Text.pack (showX forwardMemToStage3_3),
 
-        "destRegSource_3:    " <> Text.pack (show destRegSource_3),
-        "memReadData_3:      " <> Text.pack (show memReadData_3),
-        "memDataToWrite_3:   " <> Text.pack (show memDataToWrite_3)
+        "destRegSource_3:    " <> Text.pack (showX destRegSource_3),
+        "memReadData_3:      " <> Text.pack (showX memReadData_3),
+        "memDataToWrite_3:   " <> Text.pack (showX memDataToWrite_3)
     ]
 
 data Stage4 = Stage4 {
@@ -159,15 +160,15 @@ data Stage4 = Stage4 {
 
 prettyStage4 :: Stage4 -> Text
 prettyStage4 Stage4{..} = Text.intercalate "\n" [
-        "instr_4:            " <> Text.pack (show instr_4),
-        "pc_4:               " <> Text.pack (show pc_4),
-        "regWriteEn_4:       " <> Text.pack (show regWriteEn_4),
-        "execRes_4:          " <> Text.pack (show execRes_4),
-        "destRegSource_4:    " <> Text.pack (show destRegSource_4),
-        "memReadData_4:      " <> Text.pack (show memReadData_4),
+        "instr_4:            " <> Text.pack (showX instr_4),
+        "pc_4:               " <> Text.pack (showX pc_4),
+        "regWriteEn_4:       " <> Text.pack (showX regWriteEn_4),
+        "execRes_4:          " <> Text.pack (showX execRes_4),
+        "destRegSource_4:    " <> Text.pack (showX destRegSource_4),
+        "memReadData_4:      " <> Text.pack (showX memReadData_4),
 
-        "rdAddr_4:           " <> Text.pack (show rdAddr_4),
-        "rdData_4:           " <> Text.pack (show rdData_4)
+        "rdAddr_4:           " <> Text.pack (showX rdAddr_4),
+        "rdData_4:           " <> Text.pack (showX rdData_4)
     ]
 
 data PipelineState = PipelineState {

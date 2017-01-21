@@ -1,8 +1,8 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, DeriveGeneric, DeriveAnyClass #-}
 module ALU where
 
 import CLaSH.Prelude
-
+import GHC.Generics
 import Data.Bool
 
 data PrimaryOp 
@@ -14,7 +14,7 @@ data PrimaryOp
     | XOR
     | SLL
     | SR
-    deriving (Show)
+    deriving (Show, Generic, ShowX)
 
 type SecondaryOp = Bool
 

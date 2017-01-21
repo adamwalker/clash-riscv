@@ -1,8 +1,8 @@
-{-# LANGUAGE DataKinds, BinaryLiterals, ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds, BinaryLiterals, ScopedTypeVariables, DeriveGeneric, DeriveAnyClass #-}
 module Decode where
 
 import CLaSH.Prelude
-
+import GHC.Generics
 import Data.Bool
 
 import ALU
@@ -97,16 +97,16 @@ decodeAluPrimaryOp instr
             5 -> SR
             6 -> OR
             7 -> AND
-    | auipc instr = ADDSUB
-    | otherwise   = ADDSUB --TODO
+    | auipc instr || jalr instr || load instr || store instr = ADDSUB
+    | otherwise   = errorX "decodeALUPrimaryOp"
 
 decodeAluSecondaryOp :: BitVector 32 -> SecondaryOp
 decodeAluSecondaryOp instr 
     | rType instr
         = bool (unpack . slice d30 d30 $ instr) False (rType instr)
-    | auipc instr
+    | auipc instr || jalr instr || load instr || store instr || iType instr --TODO: this is not False for I type SRA
         = False
-    | otherwise = False --TODO
+    | otherwise = errorX "decodeAluSecondaryOp" 
 
 --
 --Control signal decoding
@@ -154,7 +154,7 @@ data DestRegSource
     = SourceALU
     | SourceMem
     | SourceSpec
-    deriving (Show)
+    deriving (Show, Generic, ShowX)
 
 decodeDestRegSource instr
     | iType instr || rType instr || auipc instr = SourceALU
@@ -162,7 +162,7 @@ decodeDestRegSource instr
     | lui   instr                               = SourceALU
     | jal   instr || jalr  instr                = SourceALU
     | specialReg instr                          = SourceSpec
-    | otherwise                                 = SourceALU --TODO
+    | otherwise                                 = errorX "decodeDestRegSource"
 
 --All immedates in RiscV are sign extended
 signExtendImmediate :: forall n. KnownNat n => BitVector n -> BitVector 32
@@ -180,7 +180,7 @@ extractImmediate instr
     | store instr = signExtendImmediate $ sImm instr
     | iType instr = signExtendImmediate $ iImm instr
     | jalr  instr = signExtendImmediate $ iImm instr
-    | otherwise   = 0 --TODO
+    | otherwise   = errorX "extractImmediate"
 
 --
 --Load / Store
@@ -228,7 +228,7 @@ decodeSpecialReg :: BitVector 2 -> SpecialReg
 decodeSpecialReg 0 = Cycle
 decodeSpecialReg 1 = Time
 decodeSpecialReg 2 = Retired
-decodeSpecialReg _ = Cycle -- TODO
+decodeSpecialReg _ = errorX "decodeSpecialReg"
 
 specialRegHigh :: BitVector 32 -> Bool
 specialRegHigh  = unpack . slice d27 d27
