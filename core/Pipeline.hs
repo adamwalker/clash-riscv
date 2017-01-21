@@ -164,6 +164,14 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     --Execute 
     ---------------------------------------------
 
+    {-
+    If there is a mem to ALU hazard we:
+        - stall stage 0 and 1, 
+        - insert a bubble in stage 2, 
+        - let stage 3 and 4 execute as before
+
+    Letting stage 3 execute will resolve the hazard.
+    -}
     stallStage2OrEarlier   = memToAluHazard_1
 
     --Delay the signals computed in stage 1 and insert bubbles in the relevant ones if we are stalled
@@ -254,6 +262,13 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     --Stage 3
     --Memory
     ---------------------------------------------
+    
+    {-
+    If the memory access is not ready in this cycle we:
+        - stall stages 0, 1, 2 and 3
+        - let stage 4 execute as usual
+        - insert a bubble into stage 4 in the next cycle
+    -}
     
     --Delay the signals computed in stage 2
     pc_3                 = register 0     pc_2
