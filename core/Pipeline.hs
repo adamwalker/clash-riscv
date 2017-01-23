@@ -348,7 +348,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
                 case s of
                     SourceALU  -> a
                     SourceMem  -> m
-                    SourceSpec -> sr
+                    SourceSpec -> errorX "special reg"
 
     stage4
         =   D.Stage4
