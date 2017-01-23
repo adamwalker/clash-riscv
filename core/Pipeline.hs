@@ -69,7 +69,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     pc_0     =  register (-4) nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluRes_2 <*> stallStage2OrEarlier
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> stallStage2OrEarlier
         where
         calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 stall
             | stall                              = currentPC
@@ -229,7 +229,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     aluOperand2_2 = mux aluOp2IsRegister_2 effectiveR2_2 imm_2
 
     --The ALU
-    aluRes_2  = alu <$> primaryOp_2 <*> secondaryOp_2 <*> aluOperand1_2 <*> aluOperand2_2
+    (aluAddSub, aluRes_2)  = unbundle $ alu <$> primaryOp_2 <*> secondaryOp_2 <*> aluOperand1_2 <*> aluOperand2_2
     execRes_2 = mux bypassALU_2 aluBypass_2 aluRes_2
 
     --The compare unit for branching
@@ -284,7 +284,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --Extract the mem word addresses
     wordAddressWrite_3 = slice d31 d2 <$> execRes_3
-    wordAddressRead_3  = slice d31 d2 <$> execRes_2
+    wordAddressRead_3  = slice d31 d2 <$> aluAddSub
 
     writeStrobe_3 = calcWriteStrobe <$> (extractMemSize <$> instr_3) <*> (slice d1 d0 <$> execRes_3)
 
