@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, NoImplicitPrelude #-}
 module ALU where
 
 import CLaSH.Prelude
@@ -31,4 +31,5 @@ alu op sop x y = (addSub, alu' op sop x y)
     --alu SR   x y = shiftR x (unpack $ slice d4 d0 y)
     alu' SLL    _   x y = shiftL x (unpack $ resize $ slice d4 d0 y)
     alu' SR     sop x y = shiftR x (unpack $ resize $ slice d4 d0 y)
-    addSub = bool (x + y) (x - y) sop
+    addSub = x + pack (map (xor sop) (unpack y :: Vec 32 Bool)) + bool 0 1 sop
+
