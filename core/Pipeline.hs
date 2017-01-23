@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass, GADTs #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 module Pipeline where
 
@@ -114,7 +114,13 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     imm_1     = extractImmediate <$> instr_1
 
     --The ALU bypass
-    aluBypass_1 = mux (lui <$> instr_1) (alignUpperImmediate . uImm <$> instr_1) ((pack . (+ 4)) <$> pc_1)
+    aluBypass_1 = func <$> instr_1 <*> pc_1
+        where
+        func instr_1 pc_1
+            | lui instr_1                 = alignUpperImmediate . uImm $ instr_1
+            | jal instr_1 || jalr instr_1 = pack $ pc_1 + 4
+            | otherwise                   = errorX "aluBypass_1"
+
     bypassALU_1 = lui <$> instr_1 .||. jalr <$> instr_1 .||. jal <$> instr_1 
 
     --is this instruction a jump, and we therefore need to replace the previous stage with a bubble
