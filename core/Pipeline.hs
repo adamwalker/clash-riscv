@@ -141,9 +141,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     aluOp2IsRegister_1 = secondOpIsRegister <$> instr_1
 
     --The regfile
-    theRegFile_1 = regFile rdAddr_4 regWriteEn_4 rdData_4
-    rs1Data_1    = readReg <$> theRegFile_1 <*> rs1Addr_1
-    rs2Data_1    = readReg <$> theRegFile_1 <*> rs2Addr_1
+    (rs1Data_1, rs2Data_1, theRegFile_1) = regFile rs1Addr_1 rs2Addr_1 rdAddr_4 regWriteEn_4 rdData_4
 
     --Will either of the ALU operands be forwarded?
     forwardALUOp1_1 = calcForwardingAddress <$> rs1Addr_1 <*> instr_2 <*> instr_3
