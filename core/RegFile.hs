@@ -25,10 +25,7 @@ regFile rs1 rs2 writeAddr writeEn writeData = (bypass <$> file <*> rs1 <*> write
 
 bypass :: Vec 32 (BitVector 32) -> Index 32 -> Bool -> Index 32 -> BitVector 32 -> BitVector 32
 bypass file readAddr writeEn writeAddr writeData 
+    | readAddr == 0                    = 0
     | readAddr == writeAddr && writeEn = writeData
-    | otherwise                        = readReg file readAddr
+    | otherwise                        = file !! readAddr
             
-readReg :: Vec 32 (BitVector 32) -> Index 32 -> BitVector 32
-readReg regFile idx
-    | idx == 0  = 0
-    | otherwise = regFile !! idx
