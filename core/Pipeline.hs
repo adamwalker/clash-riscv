@@ -66,13 +66,12 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     ---------------------------------------------
 
     pc_0     :: Signal (Unsigned 32)
-    pc_0     =  register (-4) nextPC_0
+    pc_0     =  regEn (-4) (fmap not stallStage2OrEarlier) nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> stallStage2OrEarlier
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub
         where
-        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 stall
-            | stall                              = currentPC
+        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
             --Branch predicted incorrectly - resume from branch PC plus 4
             | not branchTaken_2 && isBranching_2 = pc_2      + 4
             --Jumping via register - results is ready in ALU output - load it
@@ -84,7 +83,9 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
             --Business as usual
             | otherwise                          = currentPC + 4
 
-    instr_0' = instruction <$> fromInstructionMem
+    instr_0'     = instruction <$> fromInstructionMem
+    delayedStall = register False stallStage2OrEarlier
+    instr_0''    = mux delayedStall (register 0 instr_0'') instr_0'
 
     stage0 
         =   D.Stage0 
@@ -94,7 +95,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --inject nops for all branches and jumps because they are assumed taken
     --Also inject NOP for branch predicted incorrectly
-    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (fmap not branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0'
+    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (fmap not branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0''
 
     ---------------------------------------------
     --Stage 1
