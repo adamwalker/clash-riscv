@@ -124,7 +124,7 @@ The second operand to the ALU can come from
   - The second read port of the register file for R type instructions
   - The immediate field for I type instructions
 -}
-secondOpIsRegister = rType
+secondOpIsRegister instr = rType instr || branch instr
 
 --Does the instruction actually use r1
 usesRegister1 instr = rType instr || iType instr || jalr instr || branch instr || store instr || load instr

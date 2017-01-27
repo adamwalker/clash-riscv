@@ -235,7 +235,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     execRes_2 = mux bypassALU_2 aluBypass_2 aluRes_2
 
     --The compare unit for branching
-    branchTaken_2 = branchCompare <$> compareOp_2 <*> effectiveR1_2 <*> effectiveR2_2
+    branchTaken_2 = branchCompare <$> compareOp_2 <*> aluOperand1_2 <*> aluOperand2_2
 
     stage2 
         =   D.Stage2
