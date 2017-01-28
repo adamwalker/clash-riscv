@@ -125,9 +125,11 @@ recursiveFib = [
         --Load the fib index into register 2. This is the function argument.
         RIInstr     $ IInstr ADDI (Word12 8) X0 X2,
         --Call the function, X3 contains the return address
-        JumpInstr   $ JAL    (Word20 4) X3,
+        JumpInstr   $ JAL    (Word20 6) X3,
 
-        JumpInstr   $ JAL    (Word20 0) X0,
+        --Write the output in a loop
+        MemoryInstr $ STORE  Word (Word12 0xff) X4 X0,
+        JumpInstr   $ JAL    (Word20 (-2)) X0,
         
         --The function
         --We need to make a recursive call, so we need to store our local vars in a stack frame

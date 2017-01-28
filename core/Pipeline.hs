@@ -1,7 +1,8 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators #-}
+{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 module Pipeline where
 
+import GHC.Generics
 import CLaSH.Prelude
 
 import Data.Bool
@@ -34,7 +35,7 @@ data ToDataMem = ToDataMem {
     writeAddress :: Unsigned 32,
     writeData    :: BitVector 32,
     writeStrobe  :: BitVector 4
-}
+} deriving (Show, Generic, ShowX)
 
 calcForwardingAddress :: Index 32 -> BitVector 32 -> BitVector 32 -> ForwardingSource
 calcForwardingAddress sourceAddr instr_2 instr_3

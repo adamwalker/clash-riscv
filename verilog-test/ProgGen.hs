@@ -40,7 +40,7 @@ recursiveFib = [
         JumpInstr   $ JAL    (Word20 6) X3,
 
         --Write the output in a loop
-        MemoryInstr $ STORE  Word (Word12 (-12)) X4 X0,
+        MemoryInstr $ STORE  Word (Word12 0xff) X4 X0,
         JumpInstr   $ JAL    (Word20 (-2)) X0,
         
         --The function
