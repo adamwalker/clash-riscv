@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds, TypeOperators, NoImplicitPrelude, TemplateHaskell, ScopedTypeVariables, RecordWildCards, BinaryLiterals #-}
-module Test where
-
 import Control.Exception (catch, evaluate)
 import System.IO.Unsafe
 
