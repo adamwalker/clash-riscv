@@ -8,9 +8,9 @@ import Data.Bool
 import Decode
 
 doLoad :: MemSize -> Bool -> BitVector 2 -> BitVector 32 -> BitVector 32
-doLoad Byte     signExtend lowerAddress memReadValue = bool resize signExtendImmediate signExtend $ (reverse $ unpack memReadValue :: Vec 4 (BitVector 8))  !! lowerAddress
-doLoad HalfWord signExtend lowerAddress memReadValue = bool resize signExtendImmediate signExtend $ (reverse $ unpack memReadValue :: Vec 2 (BitVector 16)) !! slice d1 d1 lowerAddress
-doLoad Word     _          _            memReadValue = memReadValue
+doLoad Byte     unsigned lowerAddress memReadValue = bool signExtendImmediate resize unsigned $ (reverse $ unpack memReadValue :: Vec 4 (BitVector 8))  !! lowerAddress
+doLoad HalfWord unsigned lowerAddress memReadValue = bool signExtendImmediate resize unsigned $ (reverse $ unpack memReadValue :: Vec 2 (BitVector 16)) !! slice d1 d1 lowerAddress
+doLoad Word     _        _            memReadValue = memReadValue
 
 calcWriteStrobe :: MemSize -> BitVector 2 -> BitVector 4
 calcWriteStrobe Byte     lowerAddress 

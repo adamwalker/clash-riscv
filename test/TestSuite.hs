@@ -49,21 +49,38 @@ main = hspec $ do
 
     describe "Unit tests" $ do
         describe "Pipeline" $ do
+
             it "lui" $
                 runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
             it "auipc" $
                 runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
+
             it "stalls" $ 
                 runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
-            it "forwards alu to alu" $
-                runTest ($(listToVecTH (P.map encodeInstr aluForward)) ++ repeat 0) 100 (outputs 3)
-            it "forwards mem to alu" $ 
-                runTest ($(listToVecTH (P.map encodeInstr memALUForward)) ++ repeat 0) 100 (outputs 0x12345678)
-            it "forwards mem to mem" $ 
-                runTest ($(listToVecTH (P.map encodeInstr memMemForward)) ++ repeat 0) 100 (outputs 0x12345678)
+
+            describe "Forwarding" $ do
+                it "forwards alu to alu" $
+                    runTest ($(listToVecTH (P.map encodeInstr aluForward)) ++ repeat 0) 100 (outputs 3)
+                it "forwards mem to alu" $ 
+                    runTest ($(listToVecTH (P.map encodeInstr memALUForward)) ++ repeat 0) 100 (outputs 0x12345678)
+                it "forwards mem to mem" $ 
+                    runTest ($(listToVecTH (P.map encodeInstr memMemForward)) ++ repeat 0) 100 (outputs 0x12345678)
+
+            describe "Loads" $ do
+                it "load word" $
+                    runTest ($(listToVecTH (P.map encodeInstr loadWord)) ++ repeat 0) 100 (outputs 0x12348688)
+                it "load half" $
+                    runTest ($(listToVecTH (P.map encodeInstr loadHalf)) ++ repeat 0) 100 (outputs 0xffff8688)
+                it "load half unsigned" $
+                    runTest ($(listToVecTH (P.map encodeInstr loadHalfUnsigned)) ++ repeat 0) 100 (outputs 0x8688)
+                it "load byte" $
+                    runTest ($(listToVecTH (P.map encodeInstr loadByte)) ++ repeat 0) 100 (outputs 0xffffff88)
+                it "load byte unsigned" $
+                    runTest ($(listToVecTH (P.map encodeInstr loadByteUnsigned)) ++ repeat 0) 100 (outputs 0x88)
 
     describe "Integration tests" $ do
         describe "Pipeline" $ do
+
             it "computes recursive fibonacci correctly" $
                 runTest ($(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0) 2000 (outputs 21)
             it "computes loop fibonacci correctly" $ 

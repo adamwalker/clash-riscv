@@ -8,25 +8,7 @@ import qualified CLaSH.Prelude as P
 import RiscV.RV32I
 import RiscV.Encode.RV32I
 
-loads :: [Instr]
-loads = [
-        --Different width loads
-        RIInstr     $ LUI   (Word20 0x12345) X25,
-        RIInstr     $ IInstr ADDI (Word12 0x678) X25 X25,
-        MemoryInstr $ STORE Word (Word12 0) X25 X0,
-
-        MemoryInstr $ LOAD  (Width Word) (Word12 0) X0 X26,
-        MemoryInstr $ LOAD  (Width Half) (Word12 0) X0 X27,
-        MemoryInstr $ LOAD  (Width Byte) (Word12 0) X0 X28,
-
-        MemoryInstr $ LOAD  HalfUnsigned (Word12 0) X0 X29,
-        MemoryInstr $ LOAD  ByteUnsigned (Word12 0) X0 X30,
-
-        MemoryInstr $ LOAD  (Width Half) (Word12 2) X0 X22,
-        MemoryInstr $ LOAD  (Width Byte) (Word12 2) X0 X23,
-
-        MemoryInstr $ LOAD  (Width Byte) (Word12 1) X0 X24
-    ]
+{-# ANN module ("HLint: ignore Use ++" :: String) #-}
 
 jal :: [Instr]
 jal = [
@@ -54,6 +36,79 @@ jalr = [
         RIInstr     $ IInstr ADDI (Word12 1) X13 X13,
         RIInstr     $ IInstr ADDI (Word12 1) X14 X14,
         JumpInstr   $ JALR   (Word12 0)  X10 X0 
+    ]
+
+loads :: [Instr]
+loads = [
+        --Different width loads
+        RIInstr     $ LUI   (Word20 0x12345) X25,
+        RIInstr     $ IInstr ADDI (Word12 0x678) X25 X25,
+        MemoryInstr $ STORE Word (Word12 0) X25 X0,
+
+        MemoryInstr $ LOAD  (Width Word) (Word12 0) X0 X26,
+        MemoryInstr $ LOAD  (Width Half) (Word12 0) X0 X27,
+        MemoryInstr $ LOAD  (Width Byte) (Word12 0) X0 X28,
+
+        MemoryInstr $ LOAD  HalfUnsigned (Word12 0) X0 X29,
+        MemoryInstr $ LOAD  ByteUnsigned (Word12 0) X0 X30
+
+    ]
+
+loadSetup :: [Instr]
+loadSetup = [
+        RIInstr     $ LUI    (Word20 0x12348) X1,
+        RIInstr     $ IInstr ADDI (Word12 0x688) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 4) X1 X0
+    ]
+
+loadWord :: [Instr]
+loadWord = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD  (Width Word) (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE  Word (Word12 0xff) X2 X0
+        ]
+    ]
+
+loadHalf :: [Instr]
+loadHalf = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD (Width Half) (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
+    ]
+
+loadHalfUnsigned :: [Instr]
+loadHalfUnsigned = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD HalfUnsigned (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
+    ]
+
+loadByte :: [Instr]
+loadByte = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD (Width Byte) (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
+    ]
+
+loadByteUnsigned :: [Instr]
+loadByteUnsigned = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD ByteUnsigned (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
     ]
 
 stall :: [Instr]
