@@ -59,6 +59,8 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr aluForward)) ++ repeat 0) 100 (outputs 3)
             it "forwards mem to alu" $ 
                 runTest ($(listToVecTH (P.map encodeInstr memALUForward)) ++ repeat 0) 100 (outputs 0x12345678)
+            it "forwards mem to mem" $ 
+                runTest ($(listToVecTH (P.map encodeInstr memMemForward)) ++ repeat 0) 100 (outputs 0x12345678)
 
     describe "Integration tests" $ do
         describe "Pipeline" $ do

@@ -62,10 +62,10 @@ stall = [
         RIInstr     $ IInstr ADDI (Word12 0x670) X1 X1,
         MemoryInstr $ STORE  Word (Word12 0) X1 X0,
         --Load followed by ALU op
-        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X1,
-        RIInstr     $ IInstr ADDI (Word12 8) X1 X2,
+        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X2,
+        RIInstr     $ IInstr ADDI (Word12 8) X2 X3,
         --Output
-        MemoryInstr $ STORE  Word (Word12 0xff) X2 X0
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
     ]
 
 aluForward :: [Instr]
@@ -81,11 +81,24 @@ memALUForward = [
         RIInstr     $ IInstr ADDI (Word12 0x670) X1 X1,
         MemoryInstr $ STORE  Word (Word12 0) X1 X0,
         --Load followed by nop then ALU op
-        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X1,
+        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X2,
         RIInstr     $ IInstr ADDI (Word12 0) X0 X0,
-        RIInstr     $ IInstr ADDI (Word12 8) X1 X2,
+        RIInstr     $ IInstr ADDI (Word12 8) X2 X3,
         --Output
-        MemoryInstr $ STORE  Word (Word12 0xff) X2 X0
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+    ]
+
+memMemForward :: [Instr]
+memMemForward = [
+        RIInstr     $ LUI    (Word20 0x12345) X1,
+        RIInstr     $ IInstr ADDI (Word12 0x678) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0) X1 X0,
+        --Load followed by store
+        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X2,
+        MemoryInstr $ STORE  Word (Word12 1) X2 X0,
+        --Output
+        MemoryInstr $ LOAD   (Width Word) (Word12 1) X0 X3,
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
     ]
 
 lui :: [Instr]
