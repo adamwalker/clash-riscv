@@ -55,6 +55,8 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
             it "stalls" $ 
                 runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
+            it "forwards alu to alu" $
+                runTest ($(listToVecTH (P.map encodeInstr aluForward)) ++ repeat 0) 100 (outputs 3)
 
     describe "Integration tests" $ do
         describe "Pipeline" $ do

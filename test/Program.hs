@@ -68,6 +68,13 @@ stall = [
         MemoryInstr $ STORE  Word (Word12 0xff) X2 X0
     ]
 
+aluForward :: [Instr]
+aluForward = [
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X1,
+        RIInstr     $ IInstr ADDI (Word12 2) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
 lui :: [Instr]
 lui = [
         RIInstr     $ LUI   (Word20 0x12345) X1,
