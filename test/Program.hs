@@ -28,16 +28,6 @@ loads = [
         MemoryInstr $ LOAD  (Width Byte) (Word12 1) X0 X24
     ]
 
-stall :: [Instr]
-stall = [
-        RIInstr     $ LUI   (Word20 0x12345) X25,
-        RIInstr     $ IInstr ADDI (Word12 0x678) X25 X25,
-        MemoryInstr $ STORE Word (Word12 16) X25 X0,
-        --Load followed by ALU op
-        MemoryInstr $ LOAD  (Width Word) (Word12 16) X0 X15,
-        RIInstr     $ IInstr ADDI (Word12 5) X15 X16
-    ]
-
 jal :: [Instr]
 jal = [
         --Jumping and linking
@@ -66,16 +56,28 @@ jalr = [
         JumpInstr   $ JALR   (Word12 0)  X10 X0 
     ]
 
+stall :: [Instr]
+stall = [
+        RIInstr     $ LUI    (Word20 0x12345) X1,
+        RIInstr     $ IInstr ADDI (Word12 0x670) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0) X1 X0,
+        --Load followed by ALU op
+        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X1,
+        RIInstr     $ IInstr ADDI (Word12 8) X1 X2,
+        --Output
+        MemoryInstr $ STORE  Word (Word12 0xff) X2 X0
+    ]
+
 lui :: [Instr]
 lui = [
         RIInstr     $ LUI   (Word20 0x12345) X1,
-        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+        MemoryInstr $ STORE Word (Word12 0xff) X1 X0
     ]
 
 auipc :: [Instr]
 auipc = [
         RIInstr     $ IInstr ADDI (Word12 0) X0 X0, --NOP
-        RIInstr     $ AUIPC (Word20 0x12345) X1,
+        RIInstr     $ AUIPC  (Word20 0x12345) X1,
         MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
     ]
 

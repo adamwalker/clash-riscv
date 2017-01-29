@@ -53,6 +53,8 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
             it "auipc" $
                 runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
+            it "stalls" $ 
+                runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
 
     describe "Integration tests" $ do
         describe "Pipeline" $ do
