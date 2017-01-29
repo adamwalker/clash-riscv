@@ -46,11 +46,20 @@ outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe ==
 
 main :: IO ()
 main = hspec $ do
-    describe "Pipeline" $ do
-        it "computes recursive fibonacci correctly" $
-            runTest ($(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0) 2000 (outputs 21)
-        it "computes loop fibonacci correctly" $ 
-            runTest ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)          1000 (outputs 144)
-        it "computs unrolled fibonacci correctly" $ 
-            runTest ($(listToVecTH (P.map encodeInstr fibUnrolled)) ++ repeat 0)  1000 (outputs 89)
+
+    describe "Unit tests" $ do
+        describe "Pipeline" $ do
+            it "lui" $
+                runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
+            it "auipc" $
+                runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
+
+    describe "Integration tests" $ do
+        describe "Pipeline" $ do
+            it "computes recursive fibonacci correctly" $
+                runTest ($(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0) 2000 (outputs 21)
+            it "computes loop fibonacci correctly" $ 
+                runTest ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)          1000 (outputs 144)
+            it "computs unrolled fibonacci correctly" $ 
+                runTest ($(listToVecTH (P.map encodeInstr fibUnrolled)) ++ repeat 0)  1000 (outputs 89)
 

@@ -28,13 +28,6 @@ loads = [
         MemoryInstr $ LOAD  (Width Byte) (Word12 1) X0 X24
     ]
 
-miscInstrs :: [Instr]
-miscInstrs = [
-        --Other random instructions
-        RIInstr     $ LUI   (Word20 0x12345) X11,
-        RIInstr     $ AUIPC (Word20 0x12345) X12
-    ]
-
 stall :: [Instr]
 stall = [
         RIInstr     $ LUI   (Word20 0x12345) X25,
@@ -71,6 +64,19 @@ jalr = [
         RIInstr     $ IInstr ADDI (Word12 1) X13 X13,
         RIInstr     $ IInstr ADDI (Word12 1) X14 X14,
         JumpInstr   $ JALR   (Word12 0)  X10 X0 
+    ]
+
+lui :: [Instr]
+lui = [
+        RIInstr     $ LUI   (Word20 0x12345) X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
+auipc :: [Instr]
+auipc = [
+        RIInstr     $ IInstr ADDI (Word12 0) X0 X0, --NOP
+        RIInstr     $ AUIPC (Word20 0x12345) X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
     ]
 
 fib :: [Instr]
