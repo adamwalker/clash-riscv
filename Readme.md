@@ -10,13 +10,11 @@ A RiscV processor implementing the RV32I instruction set written in [clash](http
 
 ## Navigation
 
-The top level core is in Pipeline.hs.
+The top level core is in core/Pipeline.hs.
 
-The core is instantiated with instruction and data memory in System.hs.
+Example programs are defined in test/Program.hs. 
 
-Main.hs instantiates this design and simulates it on the program defined in Program.hs. 
-
-The sample program in Program.hs is a recursive function to calculate the ith element of the Fibonacci sequence. 
+One of the sample programs in Program.hs is a recursive function to calculate the ith element of the Fibonacci sequence. 
 
 The verilog-test directory contains a Verilog testbench which simulates the generated Verilog on the recursive Fibonacci program.
 
