@@ -81,6 +81,16 @@ loadHalf = concat [
         ]
     ]
 
+loadHalfUpper :: [Instr]
+loadHalfUpper = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD (Width Half) (Word12 6) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
+    ]
+
 loadHalfUnsigned :: [Instr]
 loadHalfUnsigned = concat [
         loadSetup,
@@ -96,6 +106,16 @@ loadByte = concat [
         loadSetup,
         [
             MemoryInstr $ LOAD (Width Byte) (Word12 4) X0 X2,
+            --Output
+            MemoryInstr $ STORE Word (Word12 0xff) X2 X0
+        ]
+    ]
+
+loadByteUpper :: [Instr]
+loadByteUpper = concat [
+        loadSetup,
+        [
+            MemoryInstr $ LOAD (Width Byte) (Word12 7) X0 X2,
             --Output
             MemoryInstr $ STORE Word (Word12 0xff) X2 X0
         ]
