@@ -8,42 +8,6 @@ import qualified CLaSH.Prelude as P
 import RiscV.RV32I
 import RiscV.Encode.RV32I
 
-fib :: [Instr]
-fib = [
-        --Fibbonnacci
-        --Initialize the first 2 fibbonnacci numbers - in X1 and X2
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X1,
-        RIInstr     $ IInstr ADDI (Word12 1) X0 X2,
-        --Initialize the counter
-        RIInstr     $ IInstr ADDI (Word12 11) X0 X3,
-        --Do the addition
-        RRInstr     $ RInstr ADD  X1 X2 X4,
-        --Shift the 2 fibs
-        RIInstr     $ IInstr ADDI (Word12 0) X2 X1,
-        RIInstr     $ IInstr ADDI (Word12 0) X4 X2,
-        --Decrement the counter
-        RIInstr     $ IInstr ADDI (Word12 (-1)) X3 X3,
-        --Branch 
-        BranchInstr $ Branch (Word12 (-4)) BNE X3 X0
-    ]
-
-fib2 :: [Instr]
-fib2 = [
-        --Faster fibbonnacci
-        --Initialize the first 2 fibbonnacci numbers - in X5 and X6
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X5,
-        RIInstr     $ IInstr ADDI (Word12 1) X0 X6,
-        --Initialize the counter
-        RIInstr     $ IInstr ADDI (Word12 5) X0 X3,
-        --Do the additions
-        RRInstr     $ RInstr ADD  X5 X6 X5,
-        RRInstr     $ RInstr ADD  X5 X6 X6,
-        --Decrement the counter
-        RIInstr     $ IInstr ADDI (Word12 (-1)) X3 X3,
-        --Branch 
-        BranchInstr $ Branch (Word12 (-6)) BNE X3 X0
-    ]
-
 loads :: [Instr]
 loads = [
         --Different width loads
@@ -107,6 +71,48 @@ jalr = [
         RIInstr     $ IInstr ADDI (Word12 1) X13 X13,
         RIInstr     $ IInstr ADDI (Word12 1) X14 X14,
         JumpInstr   $ JALR   (Word12 0)  X10 X0 
+    ]
+
+fib :: [Instr]
+fib = [
+        --Fibbonnacci
+        --Initialize the first 2 fibbonnacci numbers - in X1 and X2
+        RIInstr     $ IInstr ADDI (Word12 0) X0 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X2,
+        --Initialize the counter
+        RIInstr     $ IInstr ADDI (Word12 11) X0 X3,
+        --Do the addition
+        RRInstr     $ RInstr ADD  X1 X2 X4,
+        --Shift the 2 fibs
+        RIInstr     $ IInstr ADDI (Word12 0) X2 X1,
+        RIInstr     $ IInstr ADDI (Word12 0) X4 X2,
+        --Decrement the counter
+        RIInstr     $ IInstr ADDI (Word12 (-1)) X3 X3,
+        --Branch 
+        BranchInstr $ Branch (Word12 (-8)) BNE X3 X0,
+        --Write the output in a loop
+        MemoryInstr $ STORE  Word (Word12 0xff) X2 X0,
+        JumpInstr   $ JAL    (Word20 (-2)) X0
+    ]
+
+fibUnrolled :: [Instr]
+fibUnrolled = [
+        --Faster fibbonnacci
+        --Initialize the first 2 fibbonnacci numbers - in X5 and X6
+        RIInstr     $ IInstr ADDI (Word12 0) X0 X5,
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X6,
+        --Initialize the counter
+        RIInstr     $ IInstr ADDI (Word12 5) X0 X3,
+        --Do the additions
+        RRInstr     $ RInstr ADD  X5 X6 X5,
+        RRInstr     $ RInstr ADD  X5 X6 X6,
+        --Decrement the counter
+        RIInstr     $ IInstr ADDI (Word12 (-1)) X3 X3,
+        --Branch 
+        BranchInstr $ Branch (Word12 (-6)) BNE X3 X0,
+        --Write the output in a loop
+        MemoryInstr $ STORE  Word (Word12 0xff) X6 X0,
+        JumpInstr   $ JAL    (Word20 (-2)) X0
     ]
 
 --A Naiive, recursive, exponential time fibbonnacci function
@@ -182,19 +188,4 @@ recursiveFib = [
         JumpInstr   $ JALR   (Word12 0)  X3 X0 
 
     ]
-
-program :: [Instr]
-program = concat [
-        --miscInstrs,
-        --stall,
-        --loads,
-        --fib2,
-        --jal,
-        --jalr
-        recursiveFib
-        --stall
-    ]
-
-assembled :: [Word32]
-assembled = map encodeInstr program
 

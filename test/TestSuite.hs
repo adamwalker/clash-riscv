@@ -32,14 +32,25 @@ system program = toDataMem
     --The processor
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
 
-predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
-predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return True)
+runTest :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
+runTest instrs cycles pred = do
+    let result = sampleN_lazy cycles $ system instrs 
+        passed = any (predX pred) result
+    passed `shouldBe` True
+    where
+    predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
+    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return True)
+
+outputs :: BitVector 32 -> ToDataMem -> Bool
+outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe == 0b1111
 
 main :: IO ()
 main = hspec $ do
     describe "Pipeline" $ do
-        it "computes fibonacci correctly" $ do
-            let result = sampleN_lazy 2000 $ system $ $(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0
-                passed = any (predX (\ToDataMem{..} -> writeAddress == 63 && writeData == 21 && writeStrobe == 0b1111)) result
-            passed `shouldBe` True
+        it "computes recursive fibonacci correctly" $
+            runTest ($(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0) 2000 (outputs 21)
+        it "computes loop fibonacci correctly" $ 
+            runTest ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)          1000 (outputs 144)
+        it "computs unrolled fibonacci correctly" $ 
+            runTest ($(listToVecTH (P.map encodeInstr fibUnrolled)) ++ repeat 0)  1000 (outputs 89)
 
