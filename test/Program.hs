@@ -38,22 +38,6 @@ jalr = [
         JumpInstr   $ JALR   (Word12 0)  X10 X0 
     ]
 
-loads :: [Instr]
-loads = [
-        --Different width loads
-        RIInstr     $ LUI   (Word20 0x12345) X25,
-        RIInstr     $ IInstr ADDI (Word12 0x678) X25 X25,
-        MemoryInstr $ STORE Word (Word12 0) X25 X0,
-
-        MemoryInstr $ LOAD  (Width Word) (Word12 0) X0 X26,
-        MemoryInstr $ LOAD  (Width Half) (Word12 0) X0 X27,
-        MemoryInstr $ LOAD  (Width Byte) (Word12 0) X0 X28,
-
-        MemoryInstr $ LOAD  HalfUnsigned (Word12 0) X0 X29,
-        MemoryInstr $ LOAD  ByteUnsigned (Word12 0) X0 X30
-
-    ]
-
 loadSetup :: [Instr]
 loadSetup = [
         RIInstr     $ LUI    (Word20 0x12348) X1,

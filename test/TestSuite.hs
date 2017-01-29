@@ -89,6 +89,6 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr recursiveFib)) ++ repeat 0) 2000 (outputs 21)
             it "computes loop fibonacci correctly" $ 
                 runTest ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)          1000 (outputs 144)
-            it "computs unrolled fibonacci correctly" $ 
+            it "computes unrolled fibonacci correctly" $ 
                 runTest ($(listToVecTH (P.map encodeInstr fibUnrolled)) ++ repeat 0)  1000 (outputs 89)
 
