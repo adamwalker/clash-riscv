@@ -10,32 +10,43 @@ import RiscV.Encode.RV32I
 
 {-# ANN module ("HLint: ignore Use ++" :: String) #-}
 
-jal :: [Instr]
-jal = [
-        --Jumping and linking
-        JumpInstr   $ JAL (Word20 2) X18,
-        RIInstr     $ IInstr ADDI (Word12 1) X19 X19,
-        RIInstr     $ IInstr ADDI (Word12 1) X19 X19,
-        RIInstr     $ IInstr ADDI (Word12 1) X19 X19
-    ]
-
 jalr :: [Instr]
 jalr = [
-        --init
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X11,
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X12,
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X13,
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X14,
+        RIInstr     $ IInstr ADDI (Word12 5) X0 X4,
+        JumpInstr   $ JALR   (Word12 11) X4 X3,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
 
-        --This basic block makes the call
-        JumpInstr   $ JAL    (Word20 3) X10,
-        RIInstr     $ IInstr ADDI (Word12 1) X11 X11,
-        RIInstr     $ IInstr ADDI (Word12 1) X12 X12,
+jalr2 :: [Instr]
+jalr2 = [
+        RIInstr     $ IInstr ADDI (Word12 5) X0 X4,
+        JumpInstr   $ JALR   (Word12 11) X4 X3,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+    ]
 
-        --The subroutine
-        RIInstr     $ IInstr ADDI (Word12 1) X13 X13,
-        RIInstr     $ IInstr ADDI (Word12 1) X14 X14,
-        JumpInstr   $ JALR   (Word12 0)  X10 X0 
+jal :: [Instr]
+jal = [
+        JumpInstr   $ JAL (Word20 6) X3,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
+jal2 :: [Instr]
+jal2 = [
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        JumpInstr   $ JAL (Word20 2) X3,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        RIInstr     $ IInstr ADDI (Word12 1) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
     ]
 
 loadSetup :: [Instr]

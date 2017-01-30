@@ -54,6 +54,18 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
             it "auipc" $
                 runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
+            
+            describe "jal" $ do
+                it "jumps to right place" $
+                    runTest ($(listToVecTH (P.map encodeInstr jal)) ++ repeat 0) 100 (outputs 1)
+                it "puts currect PC in register" $
+                    runTest ($(listToVecTH (P.map encodeInstr jal2)) ++ repeat 0) 100 (outputs 8)
+
+            describe "jalr" $ do
+                it "jumps to right place" $
+                    runTest ($(listToVecTH (P.map encodeInstr jalr)) ++ repeat 0) 100 (outputs 1)
+                it "puts currect PC in register" $
+                    runTest ($(listToVecTH (P.map encodeInstr jalr2)) ++ repeat 0) 100 (outputs 8)
 
             it "stalls" $ 
                 runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
