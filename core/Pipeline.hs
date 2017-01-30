@@ -72,11 +72,11 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     jmpBranchImm_1 = unpack <$> mux (branch <$> instr_1) (signExtendImmediate . sbImm <$> instr_1) (signExtendImmediate . ujImm <$> instr_1)
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> jmpBranchImm_1
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_plus_4_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> jmpBranchImm_1
         where
-        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 jmpBranchImm_1
+        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_plus_4_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 jmpBranchImm_1
             --Branch predicted incorrectly - resume from branch PC plus 4
-            | not branchTaken_2 && isBranching_2 = pc_2 + 4
+            | not branchTaken_2 && isBranching_2 = pc_plus_4_2 
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
@@ -178,6 +178,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     --Delay the signals computed in stage 1 and insert bubbles in the relevant ones if we are stalled
     pc_2                   = register 0      pc_1
+    pc_plus_4_2            = register 0      (pc_1 + 4)
     instr_2                = register 0      $ mux stallStage2OrEarlier 0 instr_1
     rs1Data_2              = register 0      rs1Data_1
     rs2Data_2              = register 0      rs2Data_1
