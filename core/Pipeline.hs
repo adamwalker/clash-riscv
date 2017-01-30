@@ -69,18 +69,18 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     pc_0     :: Signal (Unsigned 32)
     pc_0     =  regEn (-4) (fmap not stallStage2OrEarlier) nextPC_0
 
+    jmpBranchImm_1 = unpack <$> mux (branch <$> instr_1) (signExtendImmediate . sbImm <$> instr_1) (signExtendImmediate . ujImm <$> instr_1)
+
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub
+    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> jmpBranchImm_1
         where
-        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
+        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 jmpBranchImm_1
             --Branch predicted incorrectly - resume from branch PC plus 4
-            | not branchTaken_2 && isBranching_2 = pc_2      + 4
+            | not branchTaken_2 && isBranching_2 = pc_2 + 4
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
-            | branch instr_1                     = pc_1      + unpack (signExtendImmediate (sbImm instr_1)) `shiftL` 1 :: Unsigned 32
-            --Jumps always taken
-            | jal    instr_1                     = pc_1      + unpack (signExtendImmediate (ujImm instr_1)) `shiftL` 1 :: Unsigned 32
+            | branch instr_1 || jal instr_1      = pc_1 + jmpBranchImm_1 `shiftL` 1
             --Business as usual
             | otherwise                          = pc_0 + 4
 
