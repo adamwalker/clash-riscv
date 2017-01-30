@@ -72,17 +72,17 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     nextPC_0 :: Signal (Unsigned 32)
     nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub
         where
-        calcNextPC currentPC pc_1 instr branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
+        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
             --Branch predicted incorrectly - resume from branch PC plus 4
             | not branchTaken_2 && isBranching_2 = pc_2      + 4
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
-            | branch instr                       = pc_1      + unpack (signExtendImmediate (sbImm instr)) `shiftL` 1 :: Unsigned 32
+            | branch instr_1                     = pc_1      + unpack (signExtendImmediate (sbImm instr_1)) `shiftL` 1 :: Unsigned 32
             --Jumps always taken
-            | jal    instr                       = pc_1      + unpack (signExtendImmediate (ujImm instr)) `shiftL` 1 :: Unsigned 32
+            | jal    instr_1                     = pc_1      + unpack (signExtendImmediate (ujImm instr_1)) `shiftL` 1 :: Unsigned 32
             --Business as usual
-            | otherwise                          = currentPC + 4
+            | otherwise                          = pc_0 + 4
 
     instr_0'     = instruction <$> fromInstructionMem
     delayedStall = register False stallStage2OrEarlier
