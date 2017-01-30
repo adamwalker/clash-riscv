@@ -39,7 +39,7 @@ runTest instrs cycles pred = do
     passed `shouldBe` True
     where
     predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
-    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return True)
+    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
 
 outputs :: BitVector 32 -> ToDataMem -> Bool
 outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe == 0b1111
