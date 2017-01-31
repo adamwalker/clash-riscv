@@ -112,8 +112,11 @@ main = hspec $ do
                     it "does not branch" $ 
                         runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 0xf00) (Word12 1234) BGEU)) ++ repeat 0) 100 (outputs 1)
 
-            it "stalls" $ 
-                runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
+            describe "stalls" $ do
+                it "source 1" $
+                    runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
+                it "source 2" $
+                    runTest ($(listToVecTH (P.map encodeInstr stall2)) ++ repeat 0) 100 (outputs 0x12345678)
 
             describe "Forwarding" $ do
                 it "forwards alu to alu" $
