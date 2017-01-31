@@ -10,6 +10,15 @@ import RiscV.Encode.RV32I
 
 {-# ANN module ("HLint: ignore Use ++" :: String) #-}
 
+branch :: Word12 -> Word12 -> BranchCond -> [Instr]
+branch x y cond = [
+        RIInstr     $ IInstr ADDI x X0 X1,
+        RIInstr     $ IInstr ADDI y X0 X2,
+        BranchInstr $ Branch (Word12 4) cond X1 X2,
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X3,
+        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+    ]
+
 jalr :: [Instr]
 jalr = [
         RIInstr     $ IInstr ADDI (Word12 5) X0 X4,

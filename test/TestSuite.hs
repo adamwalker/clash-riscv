@@ -67,6 +67,51 @@ main = hspec $ do
                 it "puts currect PC in register" $
                     runTest ($(listToVecTH (P.map encodeInstr jalr2)) ++ repeat 0) 100 (outputs 8)
 
+            describe "branch" $ do
+                describe "beq" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BEQ)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1235) BEQ)) ++ repeat 0) 100 (outputs 1)
+
+                describe "bne" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1235) BNE)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BNE)) ++ repeat 0) 100 (outputs 1)
+
+                describe "blt" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 1234) BLT)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BLT)) ++ repeat 0) 100 (outputs 1)
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 0xf00) BLT)) ++ repeat 0) 100 (outputs 0)
+
+                describe "bge" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BGE)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 1234) BGE)) ++ repeat 0) 100 (outputs 1)
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 0xf00) (Word12 1234) BGE)) ++ repeat 0) 100 (outputs 0)
+
+                describe "bltu" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 1234) BLTU)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BLTU)) ++ repeat 0) 100 (outputs 1)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 0xf00) BLTU)) ++ repeat 0) 100 (outputs 1)
+
+                describe "bgeu" $ do
+                    it "branches" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1234) (Word12 1234) BGEU)) ++ repeat 0) 100 (outputs 0)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 1235) (Word12 1234) BGEU)) ++ repeat 0) 100 (outputs 1)
+                    it "does not branch" $ 
+                        runTest ($(listToVecTH (P.map encodeInstr $ branch (Word12 0xf00) (Word12 1234) BGEU)) ++ repeat 0) 100 (outputs 1)
+
             it "stalls" $ 
                 runTest ($(listToVecTH (P.map encodeInstr stall)) ++ repeat 0) 100 (outputs 0x12345678)
 
