@@ -154,17 +154,47 @@ aluForward = [
         MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
     ]
 
+aluForward2 :: [Instr]
+aluForward2 = [
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X1,
+        RIInstr     $ IInstr ADDI (Word12 2) X0 X2,
+        RRInstr     $ RInstr ADD  X1 X2 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
+aluForward3 :: [Instr]
+aluForward3 = [
+        RIInstr     $ IInstr ADDI (Word12 1) X0 X1,
+        RIInstr     $ IInstr ADDI (Word12 2) X0 X2,
+        RRInstr     $ RInstr ADD  X2 X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
 memALUForward :: [Instr]
-memALUForward = [
-        RIInstr     $ LUI    (Word20 0x12345) X1,
-        RIInstr     $ IInstr ADDI (Word12 0x670) X1 X1,
-        MemoryInstr $ STORE  Word (Word12 0) X1 X0,
-        --Load followed by nop then ALU op
-        MemoryInstr $ LOAD   (Width Word) (Word12 0) X0 X2,
-        RIInstr     $ IInstr ADDI (Word12 0) X0 X0,
-        RIInstr     $ IInstr ADDI (Word12 8) X2 X3,
-        --Output
-        MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+memALUForward = concat [
+        loadSetup,
+        [
+            --Load followed by nop then ALU op
+            MemoryInstr $ LOAD   (Width Word) (Word12 4) X0 X2,
+            RIInstr     $ IInstr ADDI (Word12 0) X0 X0,
+            RIInstr     $ IInstr ADDI (Word12 8) X2 X3,
+            --Output
+            MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+        ]
+    ]
+
+memALUForward2 :: [Instr]
+memALUForward2 = concat [
+        loadSetup,
+        [
+            --Load followed by nop then ALU op
+            RIInstr     $ IInstr ADDI (Word12 8) X0 X1,
+            MemoryInstr $ LOAD   (Width Word) (Word12 4) X0 X2,
+            RIInstr     $ IInstr ADDI (Word12 0) X0 X0,
+            RRInstr     $ RInstr ADD  X1 X2 X3,
+            --Output
+            MemoryInstr $ STORE  Word (Word12 0xff) X3 X0
+        ]
     ]
 
 memMemForward :: [Instr]
