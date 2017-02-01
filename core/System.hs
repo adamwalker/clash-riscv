@@ -8,7 +8,7 @@ import RiscV.Encode.RV32I
 import Prog
 
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal ToDataMem
-system program = toDataMem
+system program = register (errorX "X") toDataMem 
     where
     --The instruction memory
     instr_0 = romPow2 program (resize . instructionAddress <$> toInstructionMem) 
