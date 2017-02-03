@@ -103,7 +103,7 @@ decodeAluPrimaryOp instr
 decodeAluSecondaryOp :: BitVector 32 -> SecondaryOp
 decodeAluSecondaryOp instr 
     | rType instr
-        = bool (unpack . slice d30 d30 $ instr) False (rType instr)
+        = unpack $ slice d30 d30 instr
     | auipc instr
         = False
     | otherwise = False --TODO
