@@ -19,6 +19,13 @@ rType x y op
     :> MemoryInstr (STORE  Word (Word12 0xff) X3 X0)
     :> Nil
 
+iType :: Word12 -> Word12 -> IOpcode -> Vec 3 Instr
+iType x y op 
+    =  RIInstr     (IInstr ADDI x X0 X1)
+    :> RIInstr     (IInstr op   y X1 X2)
+    :> MemoryInstr (STORE  Word (Word12 0xff) X2 X0)
+    :> Nil
+
 branch :: Word12 -> Word12 -> BranchCond -> [Instr]
 branch x y cond = [
         RIInstr     $ IInstr ADDI x X0 X1,

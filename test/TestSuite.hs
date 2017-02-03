@@ -54,6 +54,14 @@ testRType op func =
             100 
             (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
 
+testIType :: IOpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
+testIType op func = 
+    property $ \(x :: Signed 12) (y :: Signed 12) -> 
+        runTest 
+            (map (fromIntegral . encodeInstr) (iType (Word12 (fromIntegral x)) (Word12 (fromIntegral y)) op) ++ repeat 0) 
+            100 
+            (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
+
 main :: IO ()
 main = hspec $ do
 
@@ -76,6 +84,14 @@ main = hspec $ do
                 it "srl"  $ testRType SRL  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
                 it "sub"  $ testRType SUB  (-)
                 it "sra"  $ testRType SRA  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
+
+            describe "itype" $ do
+                it "addi"  $ testIType ADDI  (+)
+                it "slti"  $ testIType SLTI  (\x y -> bool 0 1 (x < y))
+                it "sltiu" $ testIType SLTIU (\x y -> bool 0 1 (pack x < pack y))
+                it "xori"  $ testIType XORI  xor
+                it "ori"   $ testIType ORI   (.|.)
+                it "andi"  $ testIType ANDI  (.&.)
             
             describe "jal" $ do
                 it "jumps to right place" $
