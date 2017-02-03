@@ -66,37 +66,48 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     --Instruction fetch
     ---------------------------------------------
 
+    instrStall = instructionStall <$> fromInstructionMem
+
     pc_0     :: Signal (Unsigned 32)
     pc_0     =  regEn (-4) (fmap not stallStage2OrEarlier) nextPC_0
 
     nextPC_0 :: Signal (Unsigned 32)
-    nextPC_0 =  calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub
+    nextPC_0 = calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> instrStall
         where
-        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 
+        calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 instrStall
             --Branch predicted incorrectly - resume from branch PC plus 4
-            | not branchTaken_2 && isBranching_2 = pc_2      + 4
+            | not branchTaken_2 && isBranching_2 = pc_2 + 4
             --Jumping via register - results is ready in ALU output - load it
             | isJumpingViaRegister_2             = unpack aluRes_2
             --Predict branches taken
-            | branch instr_1                     = pc_1      + unpack (signExtendImmediate (sbImm instr_1)) `shiftL` 1 :: Unsigned 32
+            | branch instr_1                     = pc_1 + unpack (signExtendImmediate (sbImm instr_1)) `shiftL` 1 :: Unsigned 32
             --Jumps always taken
-            | jal    instr_1                     = pc_1      + unpack (signExtendImmediate (ujImm instr_1)) `shiftL` 1 :: Unsigned 32
+            | jal    instr_1                     = pc_1 + unpack (signExtendImmediate (ujImm instr_1)) `shiftL` 1 :: Unsigned 32
+            | instrStall                         = pc_0
             --Business as usual
             | otherwise                          = pc_0 + 4
 
     instr_0'     = instruction <$> fromInstructionMem
-    delayedStall = register False stallStage2OrEarlier
-    instr_0''    = mux delayedStall (register 0 instr_0'') instr_0'
+    instr_0''    = mux (register False (stallStage2OrEarlier .&&. fmap not instrStall)) (register 0 instr_0'') instr_0' 
+
+    --inject nops for all branches and jumps because they are assumed taken
+    --Also inject NOP for branch predicted incorrectly
+    instr_0 = mux 
+        (    isJumping_1 
+        .||. isJumpingViaRegister_1 
+        .||. isBranching_1 
+        .||. (fmap not branchTaken_2 .&&. isBranching_2) 
+        .||. isJumpingViaRegister_2 
+        .||. instrStall
+        ) 
+        0 
+        instr_0''
 
     stage0 
         =   D.Stage0 
         <$> pc_0 
         <*> nextPC_0
         <*> instr_0
-
-    --inject nops for all branches and jumps because they are assumed taken
-    --Also inject NOP for branch predicted incorrectly
-    instr_0 = mux (isJumping_1 .||. isJumpingViaRegister_1 .||. isBranching_1 .||. (fmap not branchTaken_2 .&&. isBranching_2) .||. isJumpingViaRegister_2 .||. (instructionStall <$> fromInstructionMem)) 0 instr_0''
 
     ---------------------------------------------
     --Stage 1
