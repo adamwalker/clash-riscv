@@ -11,6 +11,13 @@ import RiscV.Encode.RV32I
 
 {-# ANN module ("HLint: ignore Use ++" :: String) #-}
 
+store :: [Instr]
+store = [
+        RIInstr     $ LUI    (Word20 0x12348) X1,
+        RIInstr     $ IInstr ADDI (Word12 0x688) X1 X1,
+        MemoryInstr $ STORE  Word (Word12 0xff) X1 X0
+    ]
+
 rType :: Word12 -> Word12 -> ROpcode -> Vec 4 Instr
 rType x y op 
     =  RIInstr     (IInstr ADDI x X0 X1)

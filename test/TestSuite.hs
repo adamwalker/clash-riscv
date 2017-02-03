@@ -68,6 +68,9 @@ main = hspec $ do
     describe "Unit tests" $ do
         describe "Pipeline" $ do
 
+            it "store" $ 
+                runTest ($(listToVecTH (P.map encodeInstr store)) ++ repeat 0) 100 (outputs 0x12348688)
+
             it "lui" $
                 runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
             it "auipc" $
