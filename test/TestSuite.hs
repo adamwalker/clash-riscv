@@ -5,8 +5,10 @@ import System.IO.Unsafe
 import CLaSH.Prelude
 import qualified Prelude as P
 import Test.Hspec
+import Test.QuickCheck hiding (resize, (.&.))
 import RiscV.RV32I
 import RiscV.Encode.RV32I
+import Data.Bool
 
 import Pipeline
 import Program
@@ -44,6 +46,14 @@ runTest instrs cycles pred = do
 outputs :: BitVector 32 -> ToDataMem -> Bool
 outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe == 0b1111
 
+testRType :: ROpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
+testRType op func = 
+    property $ \(x :: Signed 12) (y :: Signed 12) -> 
+        runTest 
+            (map (fromIntegral . encodeInstr) (rType (Word12 (fromIntegral x)) (Word12 (fromIntegral y)) op) ++ repeat 0) 
+            100 
+            (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
+
 main :: IO ()
 main = hspec $ do
 
@@ -54,6 +64,18 @@ main = hspec $ do
                 runTest ($(listToVecTH (P.map encodeInstr lui)) ++ repeat 0) 100 (outputs 0x12345000)
             it "auipc" $
                 runTest ($(listToVecTH (P.map encodeInstr auipc)) ++ repeat 0) 100 (outputs 0x12345004)
+
+            describe "rtype" $ do
+                it "add"  $ testRType ADD  (+)
+                it "slt"  $ testRType SLT  (\x y -> bool 0 1 (x < y))
+                it "sltu" $ testRType SLTU (\x y -> bool 0 1 (pack x < pack y))
+                it "and"  $ testRType AND  (.&.)
+                it "or"   $ testRType OR   (.|.)
+                it "xor"  $ testRType XOR  xor
+                it "sll"  $ testRType SLL  (\x y -> shiftL x (fromIntegral (slice d4 d0 $ pack y)))
+                it "srl"  $ testRType SRL  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
+                it "sub"  $ testRType SUB  (-)
+                it "sra"  $ testRType SRA  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
             
             describe "jal" $ do
                 it "jumps to right place" $

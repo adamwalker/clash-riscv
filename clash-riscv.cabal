@@ -39,6 +39,7 @@ Test-Suite test
         base             >=4.6   && <5, 
         clash-prelude    >=0.11  && <0.12,
         hspec,
+        QuickCheck,
         riscv-isa,
         clash-riscv
     hs-source-dirs:      test

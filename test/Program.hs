@@ -4,11 +4,20 @@ module Program where
 import Data.Word
 
 import qualified CLaSH.Prelude as P
+import CLaSH.Prelude (Vec((:>), Nil))
 
 import RiscV.RV32I
 import RiscV.Encode.RV32I
 
 {-# ANN module ("HLint: ignore Use ++" :: String) #-}
+
+rType :: Word12 -> Word12 -> ROpcode -> Vec 4 Instr
+rType x y op 
+    =  RIInstr     (IInstr ADDI x X0 X1)
+    :> RIInstr     (IInstr ADDI y X0 X2)
+    :> RRInstr     (RInstr op X1 X2 X3)
+    :> MemoryInstr (STORE  Word (Word12 0xff) X3 X0)
+    :> Nil
 
 branch :: Word12 -> Word12 -> BranchCond -> [Instr]
 branch x y cond = [
