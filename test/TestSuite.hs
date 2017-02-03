@@ -50,7 +50,7 @@ testRType :: ROpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
 testRType op func = 
     property $ \(x :: Signed 12) (y :: Signed 12) -> 
         runTest 
-            (map (fromIntegral . encodeInstr) (rType (Word12 (fromIntegral x)) (Word12 (fromIntegral y)) op) ++ repeat 0) 
+            (map (fromIntegral . encodeInstr) (rType (Word12 (fromIntegral y)) (Word12 (fromIntegral x)) op) ++ repeat 0) 
             100 
             (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
 
@@ -81,7 +81,7 @@ main = hspec $ do
                 it "or"   $ testRType OR   (.|.)
                 it "xor"  $ testRType XOR  xor
                 it "sll"  $ testRType SLL  (\x y -> shiftL x (fromIntegral (slice d4 d0 $ pack y)))
-                it "srl"  $ testRType SRL  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
+                it "srl"  $ testRType SRL  (\x y -> unpack $ shiftR (pack x) (fromIntegral (slice d4 d0 $ pack y)))
                 it "sub"  $ testRType SUB  (-)
                 it "sra"  $ testRType SRA  (\x y -> shiftR x (fromIntegral (slice d4 d0 $ pack y)))
 
