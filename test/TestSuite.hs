@@ -36,6 +36,27 @@ system program instrStall = toDataMem
     --The processor
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> mux instrStall 0 instr_0 <*> instrStall) (FromDataMem <$> memReadData_3')
 
+systemWithCache :: Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
+systemWithCache program instrStall = toDataMem
+    where
+    lines :: Vec (2 ^ 6) (Vec 16 (BitVector 32))
+    lines = unconcatI program
+
+    --The instruction memory
+    fromMem :: Signal (Vec 16 (BitVector 32))
+    fromMem = firstCycleDef $ romPow2 lines ((unpack . resize) <$> memAddr)
+
+    --The instruction cache
+    (instrReady, instrData, memReq, memAddr) = iCache (SNat @ 14) (SNat @ 12) (pure True) ((pack . instructionAddress) <$> toInstructionMem) (pure True) fromMem
+
+    --The data memory
+    memReadData_3' = firstCycleDef $ readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
+        ((resize . readAddress)  <$> toDataMem) --read address
+        (mux ((/=0) . writeStrobe <$> toDataMem) (Just <$> bundle ((resize . writeAddress) <$> toDataMem, writeData <$> toDataMem)) (pure Nothing))
+        
+    --The processor
+    (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> instrData <*> (not <$> instrReady)) (FromDataMem <$> memReadData_3')
+
 runTest :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
 runTest instrs cycles pred = do
     let result = sampleN_lazy cycles $ system instrs (pure False)
