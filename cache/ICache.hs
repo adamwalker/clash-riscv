@@ -7,7 +7,8 @@
 import CLaSH.Prelude
 import qualified Prelude as P
 
-import Test.QuickCheck hiding (resize, (.&.), (.&&.), (.||.))
+import Test.QuickCheck hiding (resize, (.&.), (.&&.), (.||.), sample)
+import qualified Test.QuickCheck as QC
 
 {-# ANN module ("HLint: ignore Use if" :: String) #-}
 
@@ -145,9 +146,11 @@ testSystem2 addresses = bundle $ (procRespValid, fromIntegral <$> procResp, memR
     (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) req addr memRespValid memResp
     (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
 
-prop addresses = testFor 100 (snd <$> testSystem addresses) 
+prop addresses = P.and success && P.or finished
+    where
+    (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses
 
-main3 = quickCheck prop
+main3 = quickCheck $ forAll (QC.resize 100 arbitrary) prop
 
 main1 = mapM print $ sampleN_lazy 25 $ testSystem list2
     where 
