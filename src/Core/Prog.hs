@@ -1,4 +1,4 @@
-module Prog where
+module Core.Prog where
 
 import Prelude
 import RiscV.RV32I

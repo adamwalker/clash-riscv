@@ -1,11 +1,11 @@
 {-# LANGUAGE DataKinds, NoImplicitPrelude, BinaryLiterals #-}
-module Mem where
+module Core.Mem where
 
 import CLaSH.Prelude
 
 import Data.Bool
 
-import Decode
+import Core.Decode
 
 doLoad :: MemSize -> Bool -> BitVector 2 -> BitVector 32 -> BitVector 32
 doLoad Byte     unsigned lowerAddress memReadValue = bool signExtendImmediate resize unsigned $ (reverse $ unpack memReadValue :: Vec 4 (BitVector 8))  !! lowerAddress

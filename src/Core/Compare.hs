@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds #-}
-module Compare where
+module Core.Compare where
 
 import CLaSH.Prelude
 

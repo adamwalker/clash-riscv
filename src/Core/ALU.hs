@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds #-}
-module ALU where
+module Core.ALU where
 
 import CLaSH.Prelude
 

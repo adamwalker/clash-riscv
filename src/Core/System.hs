@@ -1,11 +1,11 @@
 module System where
 
 import CLaSH.Prelude
-import Pipeline
 import qualified Prelude as P
 import RiscV.RV32I
 import RiscV.Encode.RV32I
-import Prog
+import Core.Pipeline
+import Core.Prog
 
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal ToDataMem
 system program = register (errorX "X") toDataMem 

@@ -10,7 +10,7 @@ import RiscV.RV32I
 import RiscV.Encode.RV32I
 import Data.Bool
 
-import Pipeline
+import Core.Pipeline
 import Program
 
 {-# ANN module ("HLint: ignore Redundant do" :: String) #-}

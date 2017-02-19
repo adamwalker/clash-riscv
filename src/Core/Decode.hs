@@ -1,11 +1,11 @@
 {-# LANGUAGE DataKinds, BinaryLiterals, ScopedTypeVariables #-}
-module Decode where
+module Core.Decode where
 
 import CLaSH.Prelude
 
 import Data.Bool
 
-import ALU
+import Core.ALU
 
 --
 --Extract parts of the instruction

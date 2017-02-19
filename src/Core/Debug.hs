@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds, RecordWildCards, OverloadedStrings #-}
-module Debug where
+module Core.Debug where
 
 import CLaSH.Prelude
 import Prelude as P
@@ -9,8 +9,8 @@ import qualified Data.Text as Text
 import Data.Monoid
 import Control.DeepSeq
 
-import ALU
-import Decode
+import Core.ALU
+import Core.Decode
 
 data ForwardingSource
     = ForwardingSourceALU

@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds, NoImplicitPrelude #-}
-module RegFile where
+module Core.RegFile where
 
 import CLaSH.Prelude
 

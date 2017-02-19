@@ -1,19 +1,19 @@
 {-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
-module Pipeline where
+module Core.Pipeline where
 
 import GHC.Generics
 import CLaSH.Prelude
 
 import Data.Bool
 
-import RegFile
-import Decode
-import ALU
-import Compare
-import Mem
-import qualified Debug as D
-import Debug (ForwardingSource(..))
+import Core.RegFile
+import Core.Decode
+import Core.ALU
+import Core.Compare
+import Core.Mem
+import qualified Core.Debug as D
+import Core.Debug (ForwardingSource(..))
 
 {-# ANN module ("HLint: ignore Functor law" :: String) #-}
 
