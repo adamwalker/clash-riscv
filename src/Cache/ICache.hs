@@ -67,7 +67,7 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, liftA2 (!!) res
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respLine) = unbundle $ pickWay <$> readRes1 <*> readRes2 <*> (register 0 tagBits)
+    (respValid, respLine) = unbundle $ pickWay <$> readRes1 <*> readRes2 <*> register 0 tagBits
         where
         pickWay :: IWay tagBits lineBits -> IWay tagBits lineBits -> BitVector tagBits -> (Bool, Vec (2 ^ lineBits) (BitVector 32))
         pickWay way1 way2 addressTag
