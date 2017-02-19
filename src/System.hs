@@ -5,7 +5,7 @@ import qualified Prelude as P
 import RiscV.RV32I
 import RiscV.Encode.RV32I
 import Core.Pipeline
-import Core.Prog
+import Prog
 
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal ToDataMem
 system program = register (errorX "X") toDataMem 
