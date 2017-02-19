@@ -1,14 +1,12 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, KindSignatures, TypeOperators, GADTs #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
---module ICache where
+
+module Cache.ICache where
 
 import CLaSH.Prelude
 import qualified Prelude as P
-
-import Test.QuickCheck hiding (resize, (.&.), (.&&.), (.||.), sample)
-import qualified Test.QuickCheck as QC
 
 {-# ANN module ("HLint: ignore Use if" :: String) #-}
 
@@ -98,116 +96,3 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, liftA2 (!!) res
     write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid' .&&. handlingMiss) replacementWay (pure Nothing)
     write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid' .&&. handlingMiss) replacementWay (pure Nothing)
 
-backingMem 
-    :: Signal Bool
-    -> Signal (BitVector 30)
-    -> Signal (Bool, Vec 16 (BitVector 32))
-backingMem req addr = register (False, repeat 0) $ (\addr -> (True, map resize $ iterateI (+ 1) (addr .&. complement 0b1111))) <$> addr
-
-testCache 
-    :: [BitVector 30]
-    -> Signal Bool
-    -> Signal (BitVector 32)
-    -> Signal ((Bool, BitVector 30), (Bool, Bool))
-testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid, instr)
-    where
-    step :: [BitVector 30] -> (Bool, BitVector 32) -> ([BitVector 30], ((Bool, BitVector 30), (Bool, Bool)))
-    step state (memReady, memData) = (state', ((memReq, memAddress), (P.null state, success)))
-        where
-        memReq = True
-        memAddress 
-            = case state' of
-                (x:xs) -> x
-                []     -> 0
-        lastMemAddress 
-            = case state of
-                (x:xs) -> x
-                []     -> 0
-        success = not memReady || (memData == resize lastMemAddress)
-        state'
-            = case memReady of
-                False -> state
-                True  -> case state of
-                    [] -> []
-                    x:xs -> xs
-
-testSystem :: [BitVector 30] -> Signal (Bool, Bool)
-testSystem addresses = result
-    where
-    (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp
-    (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
-    (testReq, result)                              = unbundle $ testCache addresses procRespValid procResp
-    (cacheReq, cacheAddress)                       = unbundle testReq
-
-testSystem2 :: Signal (Bool, BitVector 30) -> Signal (Bool, Unsigned 32, Bool, Unsigned 30, Bool, Vec 16 (BitVector 32))
-testSystem2 addresses = bundle $ (procRespValid, fromIntegral <$> procResp, memReqValid, fromIntegral <$> memReq, memRespValid, memResp)
-    where
-    (req, addr) = unbundle addresses
-    (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) req addr memRespValid memResp
-    (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
-
-prop addresses = P.and success && P.or finished
-    where
-    (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses
-
-main3 = quickCheck $ forAll (QC.resize 100 arbitrary) prop
-
-main1 = mapM print $ sampleN_lazy 25 $ testSystem list2
-    where 
-    list2 = [
-            0, 
-            1, 
-            1, 
-            1, 
-            2, 
-            1, 
-            257, 
-            257, 
-            257, 
-            257, 
-            257,
-            3,
-            0,
-            0,
-            0
-        ]
-
-main2 = mapM (\p -> print p) $ P.zip list $ sampleN_lazy 16 $ testSystem2 $ fromList list
-    where 
-    list = [
-            (True, 0), 
-            (True, 1), 
-            (True, 1), 
-            (True, 1), 
-            (True, 2), 
-            (True, 1), 
-            (True, 257), 
-            (True, 257), 
-            (True, 257), 
-            (True, 257), 
-            (True, 257), 
-            (True, 257), 
-            (True, 3), 
-            (True, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0), 
-            (False, 0)
-        ]
-
-main = main3 -- main2 >> main1
