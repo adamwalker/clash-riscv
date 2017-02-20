@@ -19,7 +19,7 @@ systemWithCache program instrStall = toDataMem
     fromMem = romPow2 lines ((unpack . resize) <$> memAddr)
 
     --The instruction cache
-    (instrReady, instrData, memReq, memAddr) = iCache (SNat @ 14) (SNat @ 12) (pure True) ((pack . instructionAddress) <$> toInstructionMem) (pure True) fromMem
+    (instrReady, instrData, memReq, memAddr) = iCache (SNat @ 20) (SNat @ 6) (pure True) ((pack . instructionAddress) <$> toInstructionMem) (pure True) fromMem
 
     --The data memory
     memReadData_3' = readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
