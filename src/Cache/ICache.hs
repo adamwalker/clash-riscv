@@ -47,7 +47,7 @@ iCache
            Signal Bool,                            --request to memory for line
            Signal (BitVector 30)                   --request to memory address
        )
-iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, liftA2 (!!) respLine (register 0 lineBits), busReq, busReqAddress)
+iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busReq, busReqAddress)
     where
     --way 1
     readRes1    = firstCycleDef $ readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write1
@@ -67,13 +67,13 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, liftA2 (!!) res
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respLine) = unbundle $ pickWay <$> readRes1 <*> readRes2 <*> register 0 tagBits
+    (respValid, respLine) = unbundle $ pickWay <$> readRes1 <*> readRes2 <*> register 0 tagBits <*> register 0 lineBits
         where
-        pickWay :: IWay tagBits lineBits -> IWay tagBits lineBits -> BitVector tagBits -> (Bool, Vec (2 ^ lineBits) (BitVector 32))
-        pickWay way1 way2 addressTag
-            | valid way1 && tag way1 == addressTag = (True,  line way1)
-            | valid way2 && tag way2 == addressTag = (True,  line way2)
-            | otherwise                            = (False, repeat 0)
+        pickWay :: IWay tagBits lineBits -> IWay tagBits lineBits -> BitVector tagBits -> BitVector lineBits -> (Bool, BitVector 32)
+        pickWay way1 way2 addressTag lineBits
+            | valid way1 && tag way1 == addressTag = (True,  line way1 !! lineBits)
+            | valid way2 && tag way2 == addressTag = (True,  line way2 !! lineBits)
+            | otherwise                            = (False, 0)
 
     --Was there a miss?
     delayedRequest = register False req
