@@ -312,6 +312,15 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     memReadData_3 = doLoad <$> (extractMemSize <$> instr_3) <*> (loadUnsigned <$> instr_3) <*> (slice d1 d0 <$> execRes_3) <*> memReadData_3'
 
+    --Calculate the writeback signals for the register file
+    --(used in stage 1)
+    rdData_3  = func <$> execRes_3 <*> memReadData_3 <*> destRegSource_3
+        where func a m s = 
+                case s of
+                    SourceALU  -> a
+                    SourceMem  -> m
+                    SourceSpec -> 0
+
     stage3 
         =   D.Stage3
         <$> pc_3
@@ -338,6 +347,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     regWriteEn_4    = register False regWriteEn_3
     destRegSource_4 = register SourceALU destRegSource_3
     memReadData_4   = register 0 memReadData_3
+    rdData_4        = register 0 rdData_3
 
     --Special registers
     cycle, time, retired :: Signal (BitVector 64)
@@ -353,15 +363,6 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
             Retired -> retired
 
     specialReg = mux (specialRegHigh <$> instr_4) (slice d63 d32 <$> specialRegAll) (slice d31 d0 <$> specialRegAll)
-
-    --Calculate the writeback signals for the register file
-    --(used in stage 1)
-    rdData_4  = func <$> execRes_4 <*> memReadData_4 <*> specialReg <*> destRegSource_4
-        where func a m sr s = 
-                case s of
-                    SourceALU  -> a
-                    SourceMem  -> m
-                    SourceSpec -> errorX "special reg"
 
     stage4
         =   D.Stage4
