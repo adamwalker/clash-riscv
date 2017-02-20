@@ -90,9 +90,11 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     busReq         :: Signal Bool           = handlingMiss
     busReqAddress  :: Signal (BitVector 30) = missAddress
 
+    expectingMem = register False (handlingMiss .&&. fmap not fromMemValid')
+
     --Request data from memory and write it back into the cache on a miss
     replacementWay :: Signal (CacheWrite indexBits tagBits lineBits)
     replacementWay =  Just <$> bundle (unpack <$> missIndex, IWay True <$> missTag <*> fromMemData)
-    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid' .&&. handlingMiss) replacementWay (pure Nothing)
-    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid' .&&. handlingMiss) replacementWay (pure Nothing)
+    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid' .&&. expectingMem) replacementWay (pure Nothing)
+    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid' .&&. expectingMem) replacementWay (pure Nothing)
 
