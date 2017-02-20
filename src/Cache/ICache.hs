@@ -75,26 +75,24 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
             | valid way2 && tag way2 == addressTag = (True,  line way2 !! lineBits)
             | otherwise                            = (False, 0)
 
-    --Was there a miss?
+    --Was there a miss in the previous cycle?
     delayedRequest = register False req
     missLastCycle  = delayedRequest .&&. fmap not respValid
 
-    fromMemValid' = fromMemValid .&&. register False handlingMiss
+    --We are expecting a value from mem a cycle after handlingMiss goes high, but not if we received a valid value from mem in the previous cycle
+    expectingMem  = register False (handlingMiss .&&. fmap not fromMemValid')
+    fromMemValid' = expectingMem .&&. fromMemValid
+    handlingMiss  = missLastCycle .||. expectingMem
 
-    --We are handling a miss if we are not in the previous cycle and we have a miss
-    --We are not handling a miss if we are in the previous cycle and we get the result from memory
-    handlingMiss   = missLastCycle .||. register False (handlingMiss .&&. fmap not fromMemValid')
     missAddress    = register 0 $ mux (fromMemValid' .||. fmap not handlingMiss) reqAddress missAddress
     (missTag, missIndex, missBits) = unbundle $ splitAddress <$> missAddress
 
     busReq         :: Signal Bool           = handlingMiss
     busReqAddress  :: Signal (BitVector 30) = missAddress
 
-    expectingMem = register False (handlingMiss .&&. fmap not fromMemValid')
-
     --Request data from memory and write it back into the cache on a miss
     replacementWay :: Signal (CacheWrite indexBits tagBits lineBits)
     replacementWay =  Just <$> bundle (unpack <$> missIndex, IWay True <$> missTag <*> fromMemData)
-    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid' .&&. expectingMem) replacementWay (pure Nothing)
-    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid' .&&. expectingMem) replacementWay (pure Nothing)
+    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid') replacementWay (pure Nothing)
+    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid') replacementWay (pure Nothing)
 
