@@ -21,13 +21,6 @@ instance (KnownNat tagBits, KnownNat lineBits) => Default (IWay tagBits lineBits
 
 type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tagBits lineBits)
 
---TODO: get rid of this
-firstCycleDef :: Default a => Signal a -> Signal a
-firstCycleDef = mealy step False
-    where
-    step False _ = (True, def)
-    step True  x = (True, x)
-
 {- Protocol:
     -The processor requests a memory access by asserting the request signal and setting the request address.
     -The cache will eventually respond by setting the valid signal and providing the data at the requested address.
@@ -50,9 +43,9 @@ iCache
 iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busReq, busReqAddress)
     where
     --way 1
-    readRes1    = firstCycleDef $ readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write1
+    readRes1    = readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write1
     --way 2
-    readRes2    = firstCycleDef $ readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write2
+    readRes2    = readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write2
 
     --lru data - random replacement for now
     lru         = register False (not <$> lru)

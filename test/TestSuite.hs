@@ -17,11 +17,14 @@ import Program
 
 {-# ANN module ("HLint: ignore Redundant do" :: String) #-}
 
-firstCycleDef :: Default a => Signal a -> Signal a
-firstCycleDef = mealy step False
+firstCycleDef' :: a -> Signal a -> Signal a
+firstCycleDef' defa = mealy step False
     where
-    step False _ = (True, def)
+    step False _ = (True, defa)
     step True  x = (True, x)
+
+firstCycleDef :: Default a => Signal a -> Signal a
+firstCycleDef = firstCycleDef' def
 
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
 system program instrStall = toDataMem
@@ -133,7 +136,7 @@ testSystem addresses = result
     where
     (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp
     (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
-    (testReq, result)                              = unbundle $ testCache addresses procRespValid procResp
+    (testReq, result)                              = unbundle $ testCache addresses (firstCycleDef' False procRespValid) procResp
     (cacheReq, cacheAddress)                       = unbundle testReq
 
 cacheProp addresses = P.and success && P.or finished
