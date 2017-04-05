@@ -64,39 +64,31 @@ systemWithCache program instrStall = toDataMem
 
 {-
  - Test runners
- - Take a list of instructions, the number of cycles to run for, and a predicate on the outgoing memory interface
+ - Takes the contents of instruction memory, the number of cycles to run for, and a predicate on the outgoing memory interface
  - Succeeds if the predicate holds in at least one cycle
  -}
 
+predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
+predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
+
 --Basic cacheless system
-runTest :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
-runTest instrs cycles pred = do
+runTest :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> Property
+runTest instrs cycles pred = property $ do
     let result = sampleN_lazy cycles $ system instrs (pure False)
-        passed = any (predX pred) result
-    passed `shouldBe` True
-    where
-    predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
-    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
+    any (predX pred) result `shouldBe` True
 
 --System with instruction cache
-runTestCache :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
-runTestCache instrs cycles pred = do
+runTestCache :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> Property
+runTestCache instrs cycles pred = property $ do
     let result = sampleN_lazy cycles $ systemWithCache instrs (pure False)
-        passed = any (predX pred) result
-    passed `shouldBe` True
-    where
-    predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
-    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
+    any (predX pred) result `shouldBe` True
 
 --System without instruction cache, but emulates cache stalls
 runTestStalls :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> Property
-runTestStalls instrs cycles pred = forAll (vectorOf (10 * cycles) arbitrary) $ \instrStall -> P.length (P.filter id instrStall) > 10 ==>
-    let result = sampleN_lazy cycles $ system instrs (fromList instrStall)
-        passed = any (predX pred) result
-    in passed `shouldBe` True
-    where
-    predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
-    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
+runTestStalls instrs cycles pred = forAll (vectorOf (5 * cycles) arbitrary) $ \instrStall -> 
+    P.length (P.filter not instrStall) > cycles ==>
+            let result = sampleN_lazy cycles $ system instrs (fromList instrStall)
+            in  any (predX pred) result `shouldBe` True
 
 --Is x outputted at least once to address 63 as a full word
 outputs :: BitVector 32 -> ToDataMem -> Bool
