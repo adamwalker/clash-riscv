@@ -20,6 +20,12 @@ import TestUtils
 
 {-# ANN module ("HLint: ignore Redundant do" :: String) #-}
 
+{-
+ - Systems
+ - Take a program, a signal to simulate instructions not being available (e.g, because of a cache miss) 
+ - Returns a Signal of data memory accesses which is used to verify correct behaviour of the system
+-}
+
 --Pipeline + instruction memory + data memory. No caches.
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
 system program instrStall = toDataMem
@@ -56,6 +62,13 @@ systemWithCache program instrStall = toDataMem
     --The processor
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> instrData <*> (not <$> instrReady)) (FromDataMem <$> memReadData_3')
 
+{-
+ - Test runners
+ - Take a list of instructions, the number of cycles to run for, and a predicate on the outgoing memory interface
+ - Succeeds if the predicate holds in at least one cycle
+ -}
+
+--Basic cacheless system
 runTest :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
 runTest instrs cycles pred = do
     let result = sampleN_lazy cycles $ system instrs (pure False)
@@ -65,6 +78,17 @@ runTest instrs cycles pred = do
     predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
     predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
 
+--System with instruction cache
+runTestCache :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> IO ()
+runTestCache instrs cycles pred = do
+    let result = sampleN_lazy cycles $ systemWithCache instrs (pure False)
+        passed = any (predX pred) result
+    passed `shouldBe` True
+    where
+    predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
+    predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
+
+--System without instruction cache, but emulates cache stalls
 runTestStalls :: Vec (2 ^ 10) (BitVector 32) -> Int -> (ToDataMem -> Bool) -> Property
 runTestStalls instrs cycles pred = forAll (vectorOf (10 * cycles) arbitrary) $ \instrStall -> P.length (P.filter id instrStall) > 10 ==>
     let result = sampleN_lazy cycles $ system instrs (fromList instrStall)
@@ -74,8 +98,13 @@ runTestStalls instrs cycles pred = forAll (vectorOf (10 * cycles) arbitrary) $ \
     predX :: (ToDataMem -> Bool) -> ToDataMem -> Bool
     predX f x = unsafePerformIO $ catch (f <$> evaluate x) (\(x :: XException) -> return False)
 
+--Is x outputted at least once to address 63 as a full word
 outputs :: BitVector 32 -> ToDataMem -> Bool
 outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe == 0b1111
+
+{-
+ - For unit testing single ALU instructions in isolation
+ -}
 
 --Test a single R type instruction
 testRType :: ROpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
