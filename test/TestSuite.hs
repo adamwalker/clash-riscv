@@ -12,20 +12,15 @@ import RiscV.Encode.RV32I
 import Data.Bool
 
 import Core.Pipeline
-import Cache.ICache hiding (firstCycleDef)
+import Cache.ICache
+
 import Program
+import CacheTest
+import TestUtils
 
 {-# ANN module ("HLint: ignore Redundant do" :: String) #-}
 
-firstCycleDef' :: a -> Signal a -> Signal a
-firstCycleDef' defa = mealy step False
-    where
-    step False _ = (True, defa)
-    step True  x = (True, x)
-
-firstCycleDef :: Default a => Signal a -> Signal a
-firstCycleDef = firstCycleDef' def
-
+--Pipeline + instruction memory + data memory. No caches.
 system :: Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
 system program instrStall = toDataMem
     where
@@ -39,6 +34,7 @@ system program instrStall = toDataMem
     --The processor
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> mux instrStall 0 instr_0 <*> instrStall) (FromDataMem <$> memReadData_3')
 
+--Pipeline + instruction cache + instruction memory + data memory. No data cache.
 systemWithCache :: Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
 systemWithCache program instrStall = toDataMem
     where
@@ -81,6 +77,7 @@ runTestStalls instrs cycles pred = forAll (vectorOf (10 * cycles) arbitrary) $ \
 outputs :: BitVector 32 -> ToDataMem -> Bool
 outputs x ToDataMem{..} = writeAddress == 63 && writeData == x && writeStrobe == 0b1111
 
+--Test a single R type instruction
 testRType :: ROpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
 testRType op func = 
     property $ \(x :: Signed 12) (y :: Signed 12) -> 
@@ -89,6 +86,7 @@ testRType op func =
             100 
             (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
 
+--Test a single I type instruction
 testIType :: IOpcode -> (Signed 32 -> Signed 32 -> Signed 32) -> Property
 testIType op func = 
     property $ \(x :: Signed 12) (y :: Signed 12) -> 
@@ -96,52 +94,6 @@ testIType op func =
             (map (fromIntegral . encodeInstr) (iType (Word12 (fromIntegral x)) (Word12 (fromIntegral y)) op) ++ repeat 0) 
             100 
             (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
-
---ICache
-backingMem 
-    :: Signal Bool
-    -> Signal (BitVector 30)
-    -> Signal (Bool, Vec 16 (BitVector 32))
-backingMem req addr = register (False, repeat 0) $ (\addr -> (True, map resize $ iterateI (+ 1) (addr .&. complement 0b1111))) <$> addr
-
-testCache 
-    :: [BitVector 30]
-    -> Signal Bool
-    -> Signal (BitVector 32)
-    -> Signal ((Bool, BitVector 30), (Bool, Bool))
-testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid, instr)
-    where
-    step :: [BitVector 30] -> (Bool, BitVector 32) -> ([BitVector 30], ((Bool, BitVector 30), (Bool, Bool)))
-    step state (memReady, memData) = (state', ((memReq, memAddress), (P.null state, success)))
-        where
-        memReq = True
-        memAddress 
-            = case state' of
-                (x:xs) -> x
-                []     -> 0
-        lastMemAddress 
-            = case state of
-                (x:xs) -> x
-                []     -> 0
-        success = not memReady || (memData == resize lastMemAddress)
-        state'
-            = case memReady of
-                False -> state
-                True  -> case state of
-                    [] -> []
-                    x:xs -> xs
-
-testSystem :: [BitVector 30] -> Signal (Bool, Bool)
-testSystem addresses = result
-    where
-    (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp
-    (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
-    (testReq, result)                              = unbundle $ testCache addresses (firstCycleDef' False procRespValid) procResp
-    (cacheReq, cacheAddress)                       = unbundle testReq
-
-cacheProp addresses = P.and success && P.or finished
-    where
-    (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses
 
 main :: IO ()
 main = hspec $ do

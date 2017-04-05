@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+
+-- | Simple unit test programs + larger integration test programs
 module Program where
 
 import Data.Word
