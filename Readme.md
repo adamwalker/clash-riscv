@@ -19,6 +19,13 @@ One of the sample programs in Program.hs is a recursive function to calculate th
 
 The verilog-test directory contains a Verilog testbench which simulates the generated Verilog on the recursive Fibonacci program.
 
+## Building
+
+```
+cd src
+clash --verilog System.hs
+```
+
 ## Testing
 
 To run the testsuite:
