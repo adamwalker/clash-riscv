@@ -26,6 +26,7 @@ type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tag
     -The cache will eventually respond by setting the valid signal and providing the data at the requested address.
     -The processor must hold the requested address high, but is not required to hold the request signal high.
  -}
+--TODO: support wrapped burst memory read instead of expecting a whole line to arrive at the same time.
 iCache 
     :: forall tagBits indexBits lineBits. ((tagBits + (indexBits + lineBits)) ~ 30, KnownNat indexBits, KnownNat tagBits, KnownNat lineBits)
     => SNat tagBits
