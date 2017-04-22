@@ -17,7 +17,9 @@ backingMem
     -> Signal (BitVector 30)
     -> Signal Bool
     -> Signal (Bool, Vec 16 (BitVector 32))
-backingMem req addr memValid = register (False, repeat 0) $ (\addr memValid -> (memValid, bool (repeat 0) (map resize (iterateI (+ 1) (addr .&. complement 0b1111))) memValid)) <$> addr <*> memValid
+backingMem req addr memValid = register (False, repeat 0) $ readMemory <$> addr <*> memValid
+    where
+    readMemory addr memValid = (memValid, bool (repeat 0) (map resize (iterateI (+ 1) (addr .&. complement 0b1111))) memValid)
 
 --Test stimulus generation for instruction cache. Requests a sequence of addresses and checks the correct result is returned.
 testCache 
