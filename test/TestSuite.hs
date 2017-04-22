@@ -54,7 +54,14 @@ systemWithCache program instrStall = toDataMem
     fromMem = firstCycleDef $ romPow2 lines ((unpack . resize) <$> memAddr)
 
     --The instruction cache
-    (instrReady, instrData, memReq, memAddr) = iCache (SNat @ 14) (SNat @ 12) (pure True) ((pack . instructionAddress) <$> toInstructionMem) (pure True) fromMem
+    (instrReady, instrData, memReq, memAddr) = 
+        iCache 
+            (SNat @ 14) 
+            (SNat @ 12) 
+            (pure True) 
+            ((pack . instructionAddress) <$> toInstructionMem) 
+            (not <$> instrStall) 
+            (mux instrStall (pure $ repeat 0) fromMem)
 
     --The data memory
     memReadData_3' = firstCycleDef $ readNew (blockRamPow2 (repeat 0 :: Vec (2 ^ 10) (BitVector 32)))
@@ -83,8 +90,8 @@ runTest instrs cycles pred = property $ do
 
 --System with instruction cache
 runTestCache :: TestRunner
-runTestCache instrs cycles pred = property $ do
-    let result = sampleN_lazy cycles $ systemWithCache instrs (pure False)
+runTestCache instrs cycles pred = forAll arbitrary $ \instrStall -> do
+    let result = sampleN_lazy cycles $ systemWithCache instrs instrStall
     any (predX pred) result `shouldBe` True
 
 --System without instruction cache, but emulates cache stalls
