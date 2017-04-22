@@ -5,6 +5,7 @@ module CacheTest where
 
 import CLaSH.Prelude
 import qualified  Prelude as P
+import Data.Bool
 
 import Cache.ICache
 
@@ -14,8 +15,9 @@ import TestUtils
 backingMem 
     :: Signal Bool
     -> Signal (BitVector 30)
+    -> Signal Bool
     -> Signal (Bool, Vec 16 (BitVector 32))
-backingMem req addr = register (False, repeat 0) $ (\addr -> (True, map resize $ iterateI (+ 1) (addr .&. complement 0b1111))) <$> addr
+backingMem req addr memValid = register (False, repeat 0) $ (\addr memValid -> (memValid, bool (repeat 0) (map resize (iterateI (+ 1) (addr .&. complement 0b1111))) memValid)) <$> addr <*> memValid
 
 --Test stimulus generation for instruction cache. Requests a sequence of addresses and checks the correct result is returned.
 testCache 
@@ -46,17 +48,17 @@ testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid
                     x:xs -> xs
 
 --Cache test system consisting of cache, backing ram and stimulus generator
-testSystem :: [BitVector 30] -> Signal (Bool, Bool)
-testSystem addresses = result
+testSystem :: [BitVector 30] -> Signal Bool -> Signal (Bool, Bool)
+testSystem addresses memValid = result
     where
     (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp
-    (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq 
+    (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq memValid
     (testReq, result)                              = unbundle $ testCache addresses (firstCycleDef' False procRespValid) procResp
     (cacheReq, cacheAddress)                       = unbundle testReq
 
 --Cache QuickCheck property
 --TODO: generate addresses with realistic access patterns
-cacheProp addresses = P.and success && P.or finished
+cacheProp addresses memValid  = P.and success && P.or finished
     where
-    (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses
+    (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses memValid
 

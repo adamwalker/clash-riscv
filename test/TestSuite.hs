@@ -127,7 +127,10 @@ main = hspec $ do
 
         describe "Instruction cache" $ do
             it "works" $
-                property $ forAll (QC.resize 100 arbitrary) cacheProp
+                property $ 
+                    forAll (QC.resize 100 arbitrary) $ \addresses -> 
+                        forAll arbitrary $ \memValid -> 
+                            cacheProp addresses memValid
 
         describe "Pipeline" $ do
 
