@@ -127,15 +127,34 @@ testIType runner op func =
             100 
             (outputs (fromIntegral ((resize x :: Signed 32) `func` resize y)))
 
+--Generates an infinite list of addresses where each address has a 50% chance of being one of the last historySize addresses
+withPreviousAccesses :: forall a. (Arbitrary a, Num a) => Int -> Gen [a]
+withPreviousAccesses historySize = withPreviousAccesses' [0]
+    where
+    withPreviousAccesses' :: [a] -> Gen [a]
+    withPreviousAccesses' hist = do
+        newAddress <- frequency [(1, pure False), (1, pure True)]
+        let th     =  P.take historySize hist
+        res        <- bool (elements th) arbitrary newAddress
+        rest       <- withPreviousAccesses' $ res : th
+        return $ res : rest
+
 main :: IO ()
 main = hspec $ do
 
     describe "Unit tests" $ do
 
         describe "Instruction cache" $ do
-            it "works" $
+            it "works with random addresses" $
                 property $ 
                     forAll (QC.resize 100 arbitrary) $ \addresses -> 
+                        forAll arbitrary $ \memValid -> 
+                            cacheProp addresses memValid
+
+            it "works with random and previous addresses" $
+                property $ 
+                    --TODO: figure out how to increase the number of addresses without using up all my RAM
+                    forAll (P.take 200 <$> withPreviousAccesses 5) $ \addresses -> 
                         forAll arbitrary $ \memValid -> 
                             cacheProp addresses memValid
 
