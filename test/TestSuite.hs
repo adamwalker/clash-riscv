@@ -139,6 +139,49 @@ withPreviousAccesses historySize = withPreviousAccesses' [0]
         rest       <- withPreviousAccesses' $ res : th
         return $ res : rest
 
+--Generates an infinite list of addresses. Attempts to test cache corner cases better than random addresses or simply including some previous adresses.
+withRealisticAccesses :: Int -> Gen [BitVector 30]
+withRealisticAccesses historySize = withRealisticAccesses' [0]
+    where
+    withRealisticAccesses' :: [BitVector 30] -> Gen [BitVector 30]
+    withRealisticAccesses' hist = do
+
+        let th        =  P.take historySize hist
+        randomAddress <- frequency [(4, pure False), (1, pure True)]
+
+        res <- case randomAddress of
+            --Generate a completely random address
+            True  -> arbitrary
+
+            --Randomly pick one of the previous addresses and possibly modify it
+            False -> do
+                --Pick the prev address to mutate
+                prevAddress <- elements th
+
+                mutateAddress <- frequency [(4, pure False), (1, pure True)]
+
+                case mutateAddress of
+                    False -> pure prevAddress
+
+                    True  -> do
+
+                        --Randomly choose 3 bits to mutate. 
+                        --The idea is that we will generate cases that mutate the
+                        --  - line bits only, thus requesting a different word in a line that is already in the cache
+                        --  - index bits only, thus requesting a different index
+                        --  - tag bits only, hitting the same index as the previous access and thereby forcing the cache to use the other way (if not in use) or evicting a pre-existing entry
+                        --Each combination of two of the above
+                        --Or, all of them
+                        bit1      <- choose (0, 29)
+                        bit2      <- choose (0, 29)
+                        bit3      <- choose (0, 29)
+
+                        pure $ flip complementBit bit1 $ flip complementBit bit2 $ flip complementBit bit3 prevAddress
+
+        rest <- withRealisticAccesses' $ res : th
+        return $ res : rest
+
+
 main :: IO ()
 main = hspec $ do
 
@@ -155,6 +198,13 @@ main = hspec $ do
                 property $ 
                     --TODO: figure out how to increase the number of addresses without using up all my RAM
                     forAll (P.take 200 <$> withPreviousAccesses 5) $ \addresses -> 
+                        forAll arbitrary $ \memValid -> 
+                            cacheProp addresses memValid
+
+            it "tests corner cases" $
+                property $ 
+                    --TODO: figure out how to increase the number of addresses without using up all my RAM
+                    forAll (P.take 200 <$> withRealisticAccesses 5) $ \addresses -> 
                         forAll arbitrary $ \memValid -> 
                             cacheProp addresses memValid
 
