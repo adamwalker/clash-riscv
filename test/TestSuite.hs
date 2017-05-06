@@ -158,7 +158,7 @@ withRealisticAccesses historySize = withRealisticAccesses' [0]
                 --Pick the prev address to mutate
                 prevAddress <- elements th
 
-                mutateAddress <- frequency [(4, pure False), (1, pure True)]
+                mutateAddress <- frequency [(1, pure False), (4, pure True)]
 
                 case mutateAddress of
                     False -> pure prevAddress
