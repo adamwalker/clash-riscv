@@ -62,7 +62,7 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respLine) = unbundle $ topFunc <$> lastTag <*> lastLine <*> (sequenceA readVec)
+    (respValid, respLine) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
         where
 
         topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, BitVector 32)
@@ -74,11 +74,12 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
         func :: BitVector tagBits -> BitVector lineBits -> IWay tagBits lineBits -> (Bool, BitVector 32)
         func tagBits lineBits IWay{..}
             | tag == tagBits = (valid, line !! lineBits)
-            | otherwise      = (False, 0)
+            | otherwise      = (False, errorX "cache undefined")
 
         merge :: (Bool, BitVector 32) -> (Bool, BitVector 32) -> (Bool, BitVector 32)
-        merge x@(True, _) _ = x
-        merge _           y = y
+        merge x@(True, _) _           = x
+        merge _           y@(True, _) = y
+        merge _           _           = (False, errorX "cache undefined")
 
     --Was there a miss in the previous cycle?
     delayedRequest = register False req
