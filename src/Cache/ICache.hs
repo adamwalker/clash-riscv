@@ -47,10 +47,12 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     readVec 
         = map 
             (readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits)) 
-            (write1 :> write2 :> Nil)
+            writes
 
     --lru data - random replacement for now
-    lru         = register False (not <$> lru)
+    lru' = register False (not <$> lru')
+    lru :: Signal (Index 2)
+    lru  = bitCoerce <$> lru'
 
     --Split the address into tag, index and line bits
     splitAddress :: BitVector 30 -> (BitVector tagBits, BitVector indexBits, BitVector lineBits)
@@ -99,6 +101,9 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     --Request data from memory and write it back into the cache on a miss
     replacementWay :: Signal (CacheWrite indexBits tagBits lineBits)
     replacementWay =  Just <$> bundle (unpack <$> missIndex, IWay True <$> missTag <*> fromMemData)
-    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid') replacementWay (pure Nothing)
-    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid') replacementWay (pure Nothing)
+
+    writes :: Vec 2 (Signal (CacheWrite indexBits tagBits lineBits))
+    writes = imap func $ repeat ()
+        where
+        func idx _ = mux ((lru .==. pure idx) .&&. fromMemValid') replacementWay (pure Nothing)
 
