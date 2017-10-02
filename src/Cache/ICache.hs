@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, KindSignatures, TypeOperators, GADTs #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, KindSignatures, TypeOperators, GADTs, RecordWildCards #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
@@ -43,10 +43,11 @@ iCache
        )
 iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busReq, busReqAddress)
     where
-    --way 1
-    readRes1    = readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write1
-    --way 2
-    readRes2    = readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits) write2
+
+    readVec 
+        = map 
+            (readNew (blockRamPow2 (repeat def :: Vec (2 ^ indexBits) (IWay tagBits lineBits))) (bitCoerce <$> indexBits)) 
+            (write1 :> write2 :> Nil)
 
     --lru data - random replacement for now
     lru         = register False (not <$> lru)
@@ -61,13 +62,23 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respLine) = unbundle $ pickWay <$> readRes1 <*> readRes2 <*> register 0 tagBits <*> register 0 lineBits
+    (respValid, respLine) = unbundle $ topFunc <$> lastTag <*> lastLine <*> (sequenceA readVec)
         where
-        pickWay :: IWay tagBits lineBits -> IWay tagBits lineBits -> BitVector tagBits -> BitVector lineBits -> (Bool, BitVector 32)
-        pickWay way1 way2 addressTag lineBits
-            | valid way1 && tag way1 == addressTag = (True,  line way1 !! lineBits)
-            | valid way2 && tag way2 == addressTag = (True,  line way2 !! lineBits)
-            | otherwise                            = (False, 0)
+
+        topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, BitVector 32)
+        topFunc tagBits lineBits ways = fold merge $ map (func tagBits lineBits) ways
+
+        lastTag  = register 0 tagBits
+        lastLine = register 0 lineBits
+
+        func :: BitVector tagBits -> BitVector lineBits -> IWay tagBits lineBits -> (Bool, BitVector 32)
+        func tagBits lineBits IWay{..}
+            | tag == tagBits = (valid, line !! lineBits)
+            | otherwise      = (False, 0)
+
+        merge :: (Bool, BitVector 32) -> (Bool, BitVector 32) -> (Bool, BitVector 32)
+        merge x@(True, _) _ = x
+        merge _           y = y
 
     --Was there a miss in the previous cycle?
     delayedRequest = register False req
