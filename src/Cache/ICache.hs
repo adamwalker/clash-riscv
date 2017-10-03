@@ -8,6 +8,8 @@ module Cache.ICache where
 import Clash.Prelude
 import qualified Prelude as P
 
+import Cache.Replacement
+
 {-# ANN module ("HLint: ignore Use if" :: String) #-}
 
 data IWay (tagBits :: Nat) (lineBits :: Nat) = IWay {
@@ -20,13 +22,6 @@ instance (KnownNat tagBits, KnownNat lineBits) => Default (IWay tagBits lineBits
     def = IWay False 0 (repeat 0)
 
 type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tagBits lineBits)
-
-type ReplacementFunc indexBits ways = Signal (BitVector indexBits) -> Signal Bool -> Signal (Index ways) -> Signal (Index ways)
-
-randomReplacement :: ReplacementFunc indexBits 2
-randomReplacement _ _ _ = bitCoerce <$> toReplace
-    where
-    toReplace = register False $ not <$> toReplace
 
 {- Protocol:
     -The processor requests a memory access by asserting the request signal and setting the request address.

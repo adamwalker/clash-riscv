@@ -8,6 +8,7 @@ import qualified  Prelude as P
 import Data.Bool
 
 import Cache.ICache
+import Cache.Replacement
 
 import TestUtils
 
