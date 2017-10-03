@@ -41,7 +41,7 @@ iCache
            Signal dom Bool,                            --request to memory for line
            Signal dom (BitVector 30)                   --request to memory address
        )
-iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busReq, busReqAddress)
+iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busReq, busReqAddress)
     where
 
     readVec 
@@ -64,7 +64,7 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respLine) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
+    (respValid, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
         where
 
         topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, BitVector 32)
