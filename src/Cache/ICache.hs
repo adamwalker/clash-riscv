@@ -64,24 +64,24 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busRe
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
+    (respValid, wayIdx, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
         where
 
-        topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, BitVector 32)
-        topFunc tagBits lineBits ways = fold merge $ map (func tagBits lineBits) ways
+        topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, Index 2, BitVector 32)
+        topFunc tagBits lineBits ways = fold merge $ imap (func tagBits lineBits) ways
 
         lastTag  = register 0 tagBits
         lastLine = register 0 lineBits
 
-        func :: BitVector tagBits -> BitVector lineBits -> IWay tagBits lineBits -> (Bool, BitVector 32)
-        func tagBits lineBits IWay{..}
-            | tag == tagBits = (valid, line !! lineBits)
-            | otherwise      = (False, errorX "cache undefined")
+        func :: BitVector tagBits -> BitVector lineBits -> Index 2 -> IWay tagBits lineBits -> (Bool, Index 2, BitVector 32)
+        func tagBits lineBits idx IWay{..}
+            | tag == tagBits = (valid, idx, line !! lineBits)
+            | otherwise      = (False, errorX "cache undefined", errorX "cache undefined")
 
-        merge :: (Bool, BitVector 32) -> (Bool, BitVector 32) -> (Bool, BitVector 32)
-        merge x@(True, _) _           = x
-        merge _           y@(True, _) = y
-        merge _           _           = (False, errorX "cache undefined")
+        merge :: (Bool, Index 2, BitVector 32) -> (Bool, Index 2, BitVector 32) -> (Bool, Index 2, BitVector 32)
+        merge x@(True, _, _) _              = x
+        merge _              y@(True, _, _) = y
+        merge _              _              = (False, errorX "cache undefined",  errorX "cache undefined")
 
     --Was there a miss in the previous cycle?
     delayedRequest = register False req
