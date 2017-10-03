@@ -55,7 +55,7 @@ testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid
 testSystem :: HasClockReset dom sync gated => [BitVector 30] -> Signal dom Bool -> Signal dom (Bool, Bool)
 testSystem addresses memValid = result
     where
-    (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp
+    (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) (SNat @ 2) randomReplacement cacheReq cacheAddress memRespValid memResp
     (memRespValid, memResp)                        = unbundle $ backingMem memReqValid memReq memValid
     (testReq, result)                              = unbundle $ testCache addresses (firstCycleDef' False procRespValid) procResp
     (cacheReq, cacheAddress)                       = unbundle testReq

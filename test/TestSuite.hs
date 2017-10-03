@@ -58,6 +58,8 @@ systemWithCache program instrStall = toDataMem
         iCache 
             (SNat @ 14) 
             (SNat @ 12) 
+            (SNat @ 2)
+            randomReplacement
             (pure True) 
             ((pack . instructionAddress) <$> toInstructionMem) 
             (not <$> instrStall) 

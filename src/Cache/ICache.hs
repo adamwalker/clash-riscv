@@ -21,6 +21,13 @@ instance (KnownNat tagBits, KnownNat lineBits) => Default (IWay tagBits lineBits
 
 type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tagBits lineBits)
 
+type ReplacementFunc indexBits ways = Signal (BitVector indexBits) -> Signal Bool -> Signal (Index ways) -> Signal (Index ways)
+
+randomReplacement :: ReplacementFunc indexBits 2
+randomReplacement _ _ _ = bitCoerce <$> toReplace
+    where
+    toReplace = register False $ not <$> toReplace
+
 {- Protocol:
     -The processor requests a memory access by asserting the request signal and setting the request address.
     -The cache will eventually respond by setting the valid signal and providing the data at the requested address.
@@ -28,9 +35,11 @@ type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tag
  -}
 --TODO: support wrapped burst memory read instead of expecting a whole line to arrive at the same time.
 iCache 
-    :: forall dom sync gated tagBits indexBits lineBits. (HasClockReset dom sync gated, (tagBits + (indexBits + lineBits)) ~ 30, KnownNat indexBits, KnownNat tagBits, KnownNat lineBits)
+    :: forall dom sync gated tagBits indexBits lineBits ways ways'. (HasClockReset dom sync gated, (tagBits + (indexBits + lineBits)) ~ 30, ways ~ (ways' + 1), KnownNat indexBits, KnownNat tagBits, KnownNat lineBits, KnownNat ways)
     => SNat tagBits
     -> SNat indexBits
+    -> SNat ways
+    -> ReplacementFunc indexBits ways
     -> Signal dom Bool                                 --request
     -> Signal dom (BitVector 30)                       --request address
     -> Signal dom Bool                                 --response from main memory is ready
@@ -41,7 +50,7 @@ iCache
            Signal dom Bool,                            --request to memory for line
            Signal dom (BitVector 30)                   --request to memory address
        )
-iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busReq, busReqAddress)
+iCache _ _ _ replacementFunc req reqAddress fromMemValid fromMemData = (respValid, respData, busReq, busReqAddress)
     where
 
     readVec 
@@ -50,9 +59,8 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busRe
             writes
 
     --lru data - random replacement for now
-    lru' = register False (not <$> lru')
-    lru :: Signal (Index 2)
-    lru  = bitCoerce <$> lru'
+    lru :: Signal (Index ways)
+    lru  = replacementFunc indexBits respValid wayIdx 
 
     --Split the address into tag, index and line bits
     splitAddress :: BitVector 30 -> (BitVector tagBits, BitVector indexBits, BitVector lineBits)
@@ -67,18 +75,18 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busRe
     (respValid, wayIdx, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
         where
 
-        topFunc :: BitVector tagBits -> BitVector lineBits -> Vec 2 (IWay tagBits lineBits) -> (Bool, Index 2, BitVector 32)
+        topFunc :: BitVector tagBits -> BitVector lineBits -> Vec ways (IWay tagBits lineBits) -> (Bool, Index ways, BitVector 32)
         topFunc tagBits lineBits ways = fold merge $ imap (func tagBits lineBits) ways
 
         lastTag  = register 0 tagBits
         lastLine = register 0 lineBits
 
-        func :: BitVector tagBits -> BitVector lineBits -> Index 2 -> IWay tagBits lineBits -> (Bool, Index 2, BitVector 32)
+        func :: BitVector tagBits -> BitVector lineBits -> Index ways -> IWay tagBits lineBits -> (Bool, Index ways, BitVector 32)
         func tagBits lineBits idx IWay{..}
             | tag == tagBits = (valid, idx, line !! lineBits)
             | otherwise      = (False, errorX "cache undefined", errorX "cache undefined")
 
-        merge :: (Bool, Index 2, BitVector 32) -> (Bool, Index 2, BitVector 32) -> (Bool, Index 2, BitVector 32)
+        merge :: (Bool, Index ways, BitVector 32) -> (Bool, Index ways, BitVector 32) -> (Bool, Index ways, BitVector 32)
         merge x@(True, _, _) _              = x
         merge _              y@(True, _, _) = y
         merge _              _              = (False, errorX "cache undefined",  errorX "cache undefined")
@@ -102,7 +110,7 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respData, busRe
     replacementWay :: Signal dom (CacheWrite indexBits tagBits lineBits)
     replacementWay =  Just <$> bundle (unpack <$> missIndex, IWay True <$> missTag <*> fromMemData)
 
-    writes :: Vec 2 (Signal dom (CacheWrite indexBits tagBits lineBits))
+    writes :: Vec ways (Signal dom (CacheWrite indexBits tagBits lineBits))
     writes = imap func $ repeat ()
         where
         func idx _ = mux ((lru .==. pure idx) .&&. fromMemValid') replacementWay (pure Nothing)
