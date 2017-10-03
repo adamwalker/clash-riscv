@@ -13,6 +13,7 @@ import Data.Bool
 
 import Core.Pipeline
 import Cache.ICache
+import Cache.Replacement
 
 import Program
 import CacheTest
