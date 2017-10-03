@@ -16,7 +16,7 @@ extra-source-files:  ChangeLog.md, Readme.md
 cabal-version:       >=1.10
 
 library
-    exposed-modules:     Core.Pipeline, Core.Debug, Core.Mem, Core.RegFile, Core.Compare, Core.ALU, Core.Decode, Cache.ICache, Cache.Replacement
+    exposed-modules:     Core.Pipeline, Core.Debug, Core.Mem, Core.RegFile, Core.Compare, Core.ALU, Core.Decode, Cache.ICache, Cache.Replacement, Cache.PseudoLRUTree
     -- other-modules:       
     other-extensions:    DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass, RecordWildCards, OverloadedStrings, BinaryLiterals, ScopedTypeVariables, TemplateHaskell
     build-depends:       
