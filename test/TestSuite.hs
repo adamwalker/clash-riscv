@@ -2,7 +2,7 @@
 import Control.Exception (catch, evaluate)
 import System.IO.Unsafe
 
-import CLaSH.Prelude
+import Clash.Prelude hiding (System)
 import qualified Prelude as P
 import Test.Hspec
 import Test.QuickCheck hiding (resize, (.&.), (.&&.), (.||.), sample)
@@ -26,10 +26,10 @@ import TestUtils
  - Returns a Signal of data memory accesses which is used to verify correct behaviour of the system
 -}
 
-type System = Vec (2 ^ 10) (BitVector 32) -> Signal Bool -> Signal ToDataMem
+type System dom = Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
 
 --Pipeline + instruction memory + data memory. No caches.
-system :: System
+system :: HasClockReset dom sync gated => System dom
 system program instrStall = toDataMem
     where
     --The instruction memory
@@ -43,14 +43,14 @@ system program instrStall = toDataMem
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> mux instrStall 0 instr_0 <*> instrStall) (FromDataMem <$> memReadData_3')
 
 --Pipeline + instruction cache + instruction memory + data memory. No data cache.
-systemWithCache :: System
+systemWithCache :: forall dom sync gated. HasClockReset dom sync gated => System dom
 systemWithCache program instrStall = toDataMem
     where
     lines :: Vec (2 ^ 6) (Vec 16 (BitVector 32))
     lines = unconcatI program
 
     --The instruction memory
-    fromMem :: Signal (Vec 16 (BitVector 32))
+    fromMem :: Signal dom (Vec 16 (BitVector 32))
     fromMem = firstCycleDef $ romPow2 lines ((unpack . resize) <$> memAddr)
 
     --The instruction cache

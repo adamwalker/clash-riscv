@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, BinaryLiterals, ScopedTypeVariables #-}
 module Core.Decode where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 

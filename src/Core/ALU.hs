@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 module Core.ALU where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 

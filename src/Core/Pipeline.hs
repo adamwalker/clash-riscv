@@ -1,9 +1,9 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
 module Core.Pipeline where
 
 import GHC.Generics
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 
@@ -46,18 +46,19 @@ calcForwardingAddress sourceAddr instr_2 instr_3
 
 {-# ANN topEntity
   (defTop
-    { t_name     = "riscvPipeline"
-    , t_inputs   = ["instruction", "instructionStall", "memoryData"]
-    , t_outputs  = ["instructionAddress", "readAddress", "writeAddress", "writeData", "writeStrobe"]
+    { t_name   = "riscvPipeline"
+    , t_inputs = [PortName "instruction", PortName "instructionStall", PortName "memoryData"]
+    , t_output = PortField "res" [PortName "instructionAddress", PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
     }) #-}
-topEntity :: Signal FromInstructionMem -> Signal FromDataMem -> (Signal ToInstructionMem, Signal ToDataMem)
+topEntity :: HasClockReset dom sync gated => Signal dom FromInstructionMem -> Signal dom FromDataMem -> (Signal dom ToInstructionMem, Signal dom ToDataMem)
 topEntity fim fdm = (tim, tdm)
     where (tim, tdm, _) = pipeline fim fdm
 
 pipeline 
-    :: Signal FromInstructionMem 
-    -> Signal FromDataMem
-    -> (Signal ToInstructionMem, Signal ToDataMem, Signal D.PipelineState)
+    :: forall dom sync gated. HasClockReset dom sync gated
+    => Signal dom FromInstructionMem 
+    -> Signal dom FromDataMem
+    -> (Signal dom ToInstructionMem, Signal dom ToDataMem, Signal dom D.PipelineState)
 pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31 d2 . pack <$> nextPC_0, toDataMem, pipelineState)
     where
 
@@ -68,10 +69,10 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
 
     instrStall = instructionStall <$> fromInstructionMem
 
-    pc_0     :: Signal (Unsigned 32)
+    pc_0     :: Signal dom (Unsigned 32)
     pc_0     =  regEn (-4) (fmap not stallStage2OrEarlier) nextPC_0
 
-    nextPC_0 :: Signal (Unsigned 32)
+    nextPC_0 :: Signal dom (Unsigned 32)
     nextPC_0 = calcNextPC <$> pc_0 <*> pc_1 <*> instr_1 <*> branchTaken_2 <*> pc_2 <*> isBranching_2 <*> isJumpingViaRegister_2 <*> aluAddSub <*> instrStall
         where
         calcNextPC pc_0 pc_1 instr_1 branchTaken_2 pc_2 isBranching_2 isJumpingViaRegister_2 aluRes_2 instrStall
@@ -119,7 +120,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     instr_1 = regEn 0 (fmap not stallStage2OrEarlier) instr_0
 
     --decode the register addresses and immediate
-    rs1Addr_1, rs2Addr_1 :: Signal (Index 32)
+    rs1Addr_1, rs2Addr_1 :: Signal dom (Index 32)
     rs1Addr_1 = (unpack . rs1)   <$> instr_1
     rs2Addr_1 = (unpack . rs2)   <$> instr_1
     imm_1     = extractImmediate <$> instr_1
@@ -340,7 +341,7 @@ pipeline fromInstructionMem fromDataMem = (ToInstructionMem . unpack . slice d31
     memReadData_4   = register 0 memReadData_3
 
     --Special registers
-    cycle, time, retired :: Signal (BitVector 64)
+    cycle, time, retired :: Signal dom (BitVector 64)
     cycle   = register 0 (cycle + 1)
     time    = register 0 (time + 1)
     retired = register 0 (retired + 1)

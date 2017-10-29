@@ -3,7 +3,7 @@
 -- | Instruction cache testbench
 module CacheTest where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import qualified  Prelude as P
 import Data.Bool
 
@@ -13,20 +13,22 @@ import TestUtils
 
 --Backing mem for cache. Delivers a line at a time
 backingMem 
-    :: Signal Bool
-    -> Signal (BitVector 30)
-    -> Signal Bool
-    -> Signal (Bool, Vec 16 (BitVector 32))
+    :: HasClockReset dom sync gated
+    => Signal dom Bool
+    -> Signal dom (BitVector 30)
+    -> Signal dom Bool
+    -> Signal dom (Bool, Vec 16 (BitVector 32))
 backingMem req addr memValid = register (False, repeat 0) $ readMemory <$> addr <*> memValid
     where
     readMemory addr memValid = (memValid, bool (repeat 0) (map resize (iterateI (+ 1) (addr .&. complement 0b1111))) memValid)
 
 --Test stimulus generation for instruction cache. Requests a sequence of addresses and checks the correct result is returned.
 testCache 
-    :: [BitVector 30]
-    -> Signal Bool
-    -> Signal (BitVector 32)
-    -> Signal ((Bool, BitVector 30), (Bool, Bool))
+    :: HasClockReset dom sync gated
+    => [BitVector 30]
+    -> Signal dom Bool
+    -> Signal dom (BitVector 32)
+    -> Signal dom ((Bool, BitVector 30), (Bool, Bool))
 testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid, instr)
     where
     step :: [BitVector 30] -> (Bool, BitVector 32) -> ([BitVector 30], ((Bool, BitVector 30), (Bool, Bool)))
@@ -50,7 +52,7 @@ testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid
                     x:xs -> xs
 
 --Cache test system consisting of cache, backing ram and stimulus generator
-testSystem :: [BitVector 30] -> Signal Bool -> Signal (Bool, Bool)
+testSystem :: HasClockReset dom sync gated => [BitVector 30] -> Signal dom Bool -> Signal dom (Bool, Bool)
 testSystem addresses memValid = result
     where
     (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) cacheReq cacheAddress memRespValid memResp

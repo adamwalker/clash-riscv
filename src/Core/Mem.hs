@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, NoImplicitPrelude, BinaryLiterals #-}
 module Core.Mem where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 

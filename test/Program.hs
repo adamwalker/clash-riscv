@@ -5,8 +5,8 @@ module Program where
 
 import Data.Word
 
-import qualified CLaSH.Prelude as P
-import CLaSH.Prelude (Vec((:>), Nil))
+import qualified Clash.Prelude as P
+import Clash.Prelude (Vec((:>), Nil))
 
 import RiscV.RV32I
 import RiscV.Encode.RV32I

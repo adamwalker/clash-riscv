@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 module Core.Compare where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 

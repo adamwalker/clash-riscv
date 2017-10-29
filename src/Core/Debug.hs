@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, RecordWildCards, OverloadedStrings #-}
 module Core.Debug where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import Prelude as P
 
 import Data.Text (Text)

@@ -1,15 +1,16 @@
 {-# LANGUAGE DataKinds, NoImplicitPrelude #-}
 module Core.RegFile where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 type RegFile = Vec 32 (BitVector 32)
 
 regFile 
-    :: Signal (Index 32)     --Write address
-    -> Signal Bool           --Write enable
-    -> Signal (BitVector 32) --Write data
-    -> Signal (Vec 32 (BitVector 32))
+    :: HasClockReset dom sync gated
+    => Signal dom (Index 32)     --Write address
+    -> Signal dom Bool           --Write enable
+    -> Signal dom (BitVector 32) --Write data
+    -> Signal dom (Vec 32 (BitVector 32))
 regFile writeAddr writeEn writeData = file
     where
     file = mealy step (repeat 0) $ bundle (writeAddr, writeEn, writeData)

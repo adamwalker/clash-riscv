@@ -5,7 +5,7 @@
 
 module Cache.ICache where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import qualified Prelude as P
 
 {-# ANN module ("HLint: ignore Use if" :: String) #-}
@@ -28,18 +28,18 @@ type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tag
  -}
 --TODO: support wrapped burst memory read instead of expecting a whole line to arrive at the same time.
 iCache 
-    :: forall tagBits indexBits lineBits. ((tagBits + (indexBits + lineBits)) ~ 30, KnownNat indexBits, KnownNat tagBits, KnownNat lineBits)
+    :: forall dom sync gated tagBits indexBits lineBits. (HasClockReset dom sync gated, (tagBits + (indexBits + lineBits)) ~ 30, KnownNat indexBits, KnownNat tagBits, KnownNat lineBits)
     => SNat tagBits
     -> SNat indexBits
-    -> Signal Bool                                 --request
-    -> Signal (BitVector 30)                       --request address
-    -> Signal Bool                                 --response from main memory is ready
-    -> Signal (Vec (2 ^ lineBits) (BitVector 32))  --respose from memory containing the requested line
+    -> Signal dom Bool                                 --request
+    -> Signal dom (BitVector 30)                       --request address
+    -> Signal dom Bool                                 --response from main memory is ready
+    -> Signal dom (Vec (2 ^ lineBits) (BitVector 32))  --respose from memory containing the requested line
     -> (
-           Signal Bool,                            --response to processor valid
-           Signal (BitVector 32),                  --response to processor data
-           Signal Bool,                            --request to memory for line
-           Signal (BitVector 30)                   --request to memory address
+           Signal dom Bool,                            --response to processor valid
+           Signal dom (BitVector 32),                  --response to processor data
+           Signal dom Bool,                            --request to memory for line
+           Signal dom (BitVector 30)                   --request to memory address
        )
 iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busReq, busReqAddress)
     where
@@ -81,12 +81,12 @@ iCache _ _ req reqAddress fromMemValid fromMemData = (respValid, respLine, busRe
     missAddress    = register 0 $ mux (fromMemValid' .||. fmap not handlingMiss) reqAddress missAddress
     (missTag, missIndex, missBits) = unbundle $ splitAddress <$> missAddress
 
-    busReq         :: Signal Bool           = handlingMiss
-    busReqAddress  :: Signal (BitVector 30) = missAddress
+    busReq         :: Signal dom Bool           = handlingMiss
+    busReqAddress  :: Signal dom (BitVector 30) = missAddress
 
     --Request data from memory and write it back into the cache on a miss
-    replacementWay :: Signal (CacheWrite indexBits tagBits lineBits)
+    replacementWay :: Signal dom (CacheWrite indexBits tagBits lineBits)
     replacementWay =  Just <$> bundle (unpack <$> missIndex, IWay True <$> missTag <*> fromMemData)
-    write1         :: Signal (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid') replacementWay (pure Nothing)
-    write2         :: Signal (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid') replacementWay (pure Nothing)
+    write1         :: Signal dom (CacheWrite indexBits tagBits lineBits) = mux (lru           .&&. fromMemValid') replacementWay (pure Nothing)
+    write2         :: Signal dom (CacheWrite indexBits tagBits lineBits) = mux ((not <$> lru) .&&. fromMemValid') replacementWay (pure Nothing)
 
