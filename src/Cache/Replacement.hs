@@ -31,7 +31,7 @@ pseudoLRUReplacement index valid way = bitCoerce . getOldestWay <$> readResult
     lastIdx    = register 0 index
 
     write      :: Signal dom (Maybe (Unsigned indexBits, Vec ((2 ^ numWaysLog) - 1) Bool))
-    write      = mux valid (func <$> index <*> readResult <*> way) (pure Nothing)
+    write      = mux valid (func <$> lastIdx <*> readResult <*> way) (pure Nothing)
         where 
         func index readResult way = Just (unpack index, updateWay (bitCoerce way) readResult)
 

@@ -66,8 +66,10 @@ iCache _ _ _ replacementFunc req reqAddress fromMemValid fromMemData = (respVali
 
     (tagBits, indexBits, lineBits) = unbundle $ splitAddress <$> reqAddress
 
+    respValid = delayedRequest .&&. respValid'
+
     --Combinationally mux the data from the way that contains the address (if any)
-    (respValid, wayIdx, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
+    (respValid', wayIdx, respData) = unbundle $ topFunc <$> lastTag <*> lastLine <*> sequenceA readVec
         where
 
         topFunc :: BitVector tagBits -> BitVector lineBits -> Vec ways (IWay tagBits lineBits) -> (Bool, Index ways, BitVector 32)
@@ -108,5 +110,5 @@ iCache _ _ _ replacementFunc req reqAddress fromMemValid fromMemData = (respVali
     writes :: Vec ways (Signal dom (CacheWrite indexBits tagBits lineBits))
     writes = imap func $ repeat ()
         where
-        func idx _ = mux ((lru .==. pure idx) .&&. fromMemValid') replacementWay (pure Nothing)
+        func idx _ = mux (fromMemValid' .&&. (lru .==. pure idx)) replacementWay (pure Nothing)
 
