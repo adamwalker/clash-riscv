@@ -34,7 +34,7 @@ iCache
     => SNat tagBits
     -> SNat indexBits
     -> SNat ways
-    -> ReplacementFunc indexBits ways
+    -> ReplacementFunc dom indexBits ways
     -> Signal dom Bool                                 --request
     -> Signal dom (BitVector 30)                       --request address
     -> Signal dom Bool                                 --response from main memory is ready
@@ -54,7 +54,7 @@ iCache _ _ _ replacementFunc req reqAddress fromMemValid fromMemData = (respVali
             writes
 
     --lru data - random replacement for now
-    lru :: Signal (Index ways)
+    lru :: Signal dom (Index ways)
     lru  = replacementFunc indexBits respValid wayIdx 
 
     --Split the address into tag, index and line bits
