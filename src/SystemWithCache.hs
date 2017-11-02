@@ -9,7 +9,7 @@ import Prog
 import Cache.ICache
 import Cache.Replacement
 
-systemWithCache :: forall dom sync gated. HasClockReset dom sync gated => Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
+systemWithCache :: forall dom sync gated. HasClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
 systemWithCache program instrStall = toDataMem
     where
     lines :: Vec (2 ^ 6) (Vec 16 (BitVector 32))

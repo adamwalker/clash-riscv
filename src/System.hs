@@ -8,7 +8,7 @@ import RiscV.Encode.RV32I
 import Core.Pipeline
 import Prog
 
-system :: HasClockReset dom sync gated => Vec (2 ^ 10) (BitVector 32) -> Signal dom ToDataMem
+system :: HasClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom ToDataMem
 system program = register (errorX "X") toDataMem 
     where
     --The instruction memory

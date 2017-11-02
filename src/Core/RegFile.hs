@@ -6,7 +6,7 @@ import Clash.Prelude
 type RegFile = Vec 32 (BitVector 32)
 
 regFile 
-    :: HasClockReset dom sync gated
+    :: HasClockReset dom gated sync
     => Signal dom (Index 32)     --Write address
     -> Signal dom Bool           --Write enable
     -> Signal dom (BitVector 32) --Write data

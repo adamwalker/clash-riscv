@@ -15,13 +15,13 @@ type ReplacementFunc dom indexBits ways
     -> Signal dom (Index ways)          --Way that was hit (if any) in the next cycle
     -> Signal dom (Index ways)          --Way to replace in the current cycle
 
-randomReplacement :: HasClockReset dom sync gated => ReplacementFunc dom indexBits 2
+randomReplacement :: HasClockReset dom gated sync => ReplacementFunc dom indexBits 2
 randomReplacement _ _ _ = bitCoerce <$> toReplace
     where
     toReplace = register False $ not <$> toReplace
 
 pseudoLRUReplacement 
-    :: forall dom sync gated indexBits numWaysLog. (HasClockReset dom sync gated, KnownNat indexBits, KnownNat numWaysLog, 1 <= numWaysLog) 
+    :: forall dom sync gated indexBits numWaysLog. (HasClockReset dom gated sync, KnownNat indexBits, KnownNat numWaysLog, 1 <= numWaysLog) 
     => ReplacementFunc dom indexBits (2 ^ numWaysLog)
 pseudoLRUReplacement index valid way = bitCoerce . getOldestWay <$> readResult
     where

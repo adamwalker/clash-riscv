@@ -30,7 +30,7 @@ type CacheWrite indexBits tagBits lineBits = Maybe (Unsigned indexBits, IWay tag
  -}
 --TODO: support wrapped burst memory read instead of expecting a whole line to arrive at the same time.
 iCache 
-    :: forall dom sync gated tagBits indexBits lineBits ways ways'. (HasClockReset dom sync gated, (tagBits + (indexBits + lineBits)) ~ 30, ways ~ (ways' + 1), KnownNat indexBits, KnownNat tagBits, KnownNat lineBits, KnownNat ways)
+    :: forall dom sync gated tagBits indexBits lineBits ways ways'. (HasClockReset dom gated sync, (tagBits + (indexBits + lineBits)) ~ 30, ways ~ (ways' + 1), KnownNat indexBits, KnownNat tagBits, KnownNat lineBits, KnownNat ways)
     => SNat tagBits
     -> SNat indexBits
     -> SNat ways
