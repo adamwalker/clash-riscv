@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, BinaryLiterals #-}
 module Core.Mem where
 
 import Clash.Prelude

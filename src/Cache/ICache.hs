@@ -1,7 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, KindSignatures, TypeOperators, GADTs, RecordWildCards #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+{-# LANGUAGE ScopedTypeVariables, RecordWildCards #-}
 
 module Cache.ICache where
 

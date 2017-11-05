@@ -1,7 +1,4 @@
-{-# LANGUAGE UndecidableInstances, ScopedTypeVariables, TypeApplications, DataKinds, TypeOperators, NoImplicitPrelude, KindSignatures, TypeFamilies #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+{-# LANGUAGE UndecidableInstances, ScopedTypeVariables  #-}
 
 module Cache.PseudoLRUTree where
 

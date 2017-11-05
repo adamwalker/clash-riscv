@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 module Core.ALU where
 
 import Clash.Prelude

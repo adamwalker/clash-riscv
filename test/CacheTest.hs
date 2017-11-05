@@ -1,5 +1,3 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, BinaryLiterals, TypeApplications #-}
-
 -- | Instruction cache testbench
 module CacheTest where
 

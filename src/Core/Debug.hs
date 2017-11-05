@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, RecordWildCards, OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 module Core.Debug where
 
 import Clash.Prelude

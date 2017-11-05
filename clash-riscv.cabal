@@ -32,6 +32,18 @@ library
         ghc-typelits-extra
     hs-source-dirs:      src
     default-language:    Haskell2010
+    default-extensions:  
+        ScopedTypeVariables, 
+        NoImplicitPrelude, 
+        TypeOperators, 
+        DataKinds, 
+        FlexibleContexts, 
+        TypeApplications, 
+        BinaryLiterals, 
+        GADTs,
+        KindSignatures,
+        TypeFamilies
+    ghc-options:         -fplugin=GHC.TypeLits.Normalise -fplugin=GHC.TypeLits.KnownNat.Solver -fplugin GHC.TypeLits.Extra.Solver
 
 Test-Suite test
     type:                exitcode-stdio-1.0
@@ -46,3 +58,14 @@ Test-Suite test
         clash-riscv
     hs-source-dirs:      test
     default-language:    Haskell2010
+    default-extensions:  
+        ScopedTypeVariables, 
+        TypeOperators, 
+        DataKinds, 
+        FlexibleContexts, 
+        TypeApplications, 
+        BinaryLiterals, 
+        GADTs,
+        KindSignatures,
+        TypeFamilies,
+        RecordWildCards

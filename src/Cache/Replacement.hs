@@ -1,7 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, GADTs #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+{-# LANGUAGE ScopedTypeVariables, GADTs #-}
 
 module Cache.Replacement where
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude #-}
 module Core.RegFile where
 
 import Clash.Prelude

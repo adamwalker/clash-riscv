@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, BinaryLiterals, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Core.Decode where
 
 import Clash.Prelude

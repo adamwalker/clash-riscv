@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, TypeOperators, NoImplicitPrelude, TemplateHaskell, ScopedTypeVariables, RecordWildCards, BinaryLiterals, TypeApplications #-}
+{-# LANGUAGE TemplateHaskell  #-}
 import Control.Exception (catch, evaluate)
 import System.IO.Unsafe
 

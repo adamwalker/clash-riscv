@@ -1,5 +1,4 @@
-{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators, DeriveGeneric, DeriveAnyClass, ScopedTypeVariables #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Extra.Solver #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, ScopedTypeVariables #-}
 module Core.Pipeline where
 
 import GHC.Generics

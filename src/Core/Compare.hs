@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 module Core.Compare where
 
 import Clash.Prelude
