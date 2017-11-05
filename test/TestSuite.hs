@@ -190,6 +190,12 @@ main = hspec $ do
 
     describe "Unit tests" $ do
 
+        describe "Pseudo LRU tree" $ do
+            specify "cycles through all possibilities" $ property prop_plru
+            specify "both implementations same"        $ property prop_plruSame
+            specify "update same index idempotent"     $ property prop_plruIdempotent
+            specify "simple case with single bit"      $ property prop_plruSimpleCase
+
         describe "Instruction cache" $ do
             it "works with random addresses" $
                 property $ 

@@ -3,12 +3,14 @@
 -- | Instruction cache testbench
 module CacheTest where
 
-import Clash.Prelude
+import Clash.Prelude as Clash
 import qualified  Prelude as P
 import Data.Bool
+import Data.List (sort)
 
 import Cache.ICache
 import Cache.Replacement
+import Cache.PseudoLRUTree
 
 import TestUtils
 
@@ -66,4 +68,26 @@ testSystem addresses memValid = result
 cacheProp addresses memValid  = P.and success && P.or finished
     where
     (finished, success) = P.unzip $ P.take 1000 $ sample $ testSystem addresses memValid
+
+--Pseudu lru tree pseudo-tests
+
+prop_plru :: Vec 15 Bool -> Bool
+prop_plru tree = reordered == [0..15]
+    where
+    trees     = Clash.iterate (SNat @ 16) func tree
+        where
+        func tree = updateWay (getOldestWay tree) tree
+    reordered = sort $ Clash.toList $ Clash.map (fromIntegral . pack) $ Clash.map getOldestWay trees
+
+prop_plruSame :: Vec 15 Bool -> Bool
+prop_plruSame tree = updateOldestWay tree == (oldest, newTree)
+    where
+    oldest  = getOldestWay tree
+    newTree = updateWay oldest tree
+
+prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Bool
+prop_plruIdempotent tree idx = updateWay idx tree == updateWay idx (updateWay idx tree)
+
+prop_plruSimpleCase :: Vec 1 Bool -> Bool
+prop_plruSimpleCase tree = updateWay (getOldestWay tree) tree == Clash.map not tree
 
