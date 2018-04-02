@@ -9,7 +9,7 @@ import Prog
 import Cache.ICache
 import Cache.Replacement
 
-systemWithCache :: forall dom sync gated. HasClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
+systemWithCache :: forall dom sync gated. HiddenClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
 systemWithCache program instrStall = toDataMem
     where
     lines :: Vec (2 ^ 6) (Vec 16 (BitVector 32))
@@ -31,10 +31,10 @@ systemWithCache program instrStall = toDataMem
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> instrData <*> (not <$> instrReady)) (FromDataMem <$> memReadData_3')
 
 {-# ANN topEntity
-  (defTop
+  (Synthesize
     { t_name   = "riscvPipeline"
-    , t_inputs = [PortName "clk", PortName "rst"]
-    , t_output = PortField "res" [PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
+    , t_inputs = [PortName "clk", PortName "rst", PortName "instrStall"]
+    , t_output = PortProduct "res" [PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
     }) #-}
-
+topEntity :: Clock System Source -> Reset System Synchronous -> Signal System Bool -> Signal System ToDataMem
 topEntity clk rst = withClockReset clk rst $ systemWithCache ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)

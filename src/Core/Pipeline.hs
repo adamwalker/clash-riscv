@@ -43,18 +43,12 @@ calcForwardingAddress sourceAddr instr_2 instr_3
     | unpack (rd instr_3) == sourceAddr && enableRegWrite instr_3 = ForwardingSourceMem
     | otherwise                                                   = NoForwarding
 
-{-# ANN topEntity
-  (defTop
-    { t_name   = "riscvPipeline"
-    , t_inputs = [PortName "instruction", PortName "instructionStall", PortName "memoryData"]
-    , t_output = PortField "res" [PortName "instructionAddress", PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
-    }) #-}
-topEntity :: HasClockReset dom gated sync => Signal dom FromInstructionMem -> Signal dom FromDataMem -> (Signal dom ToInstructionMem, Signal dom ToDataMem)
+topEntity :: HiddenClockReset dom gated sync => Signal dom FromInstructionMem -> Signal dom FromDataMem -> (Signal dom ToInstructionMem, Signal dom ToDataMem)
 topEntity fim fdm = (tim, tdm)
     where (tim, tdm, _) = pipeline fim fdm
 
 pipeline 
-    :: forall dom sync gated. HasClockReset dom gated sync
+    :: forall dom sync gated. HiddenClockReset dom gated sync
     => Signal dom FromInstructionMem 
     -> Signal dom FromDataMem
     -> (Signal dom ToInstructionMem, Signal dom ToDataMem, Signal dom D.PipelineState)

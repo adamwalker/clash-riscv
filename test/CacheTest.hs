@@ -14,7 +14,7 @@ import TestUtils
 
 --Backing mem for cache. Delivers a line at a time
 backingMem 
-    :: HasClockReset dom sync gated
+    :: HiddenClockReset dom sync gated
     => Signal dom Bool
     -> Signal dom (BitVector 30)
     -> Signal dom Bool
@@ -25,7 +25,7 @@ backingMem req addr memValid = register (False, repeat 0) $ readMemory <$> addr 
 
 --Test stimulus generation for instruction cache. Requests a sequence of addresses and checks the correct result is returned.
 testCache 
-    :: HasClockReset dom sync gated
+    :: HiddenClockReset dom sync gated
     => [BitVector 30]
     -> Signal dom Bool
     -> Signal dom (BitVector 32)
@@ -53,7 +53,7 @@ testCache addresses instrValid instr = mealy step addresses $ bundle (instrValid
                     x:xs -> xs
 
 --Cache test system consisting of cache, backing ram and stimulus generator
-testSystem :: HasClockReset dom sync gated => [BitVector 30] -> Signal dom Bool -> Signal dom (Bool, Bool)
+testSystem :: HiddenClockReset dom sync gated => [BitVector 30] -> Signal dom Bool -> Signal dom (Bool, Bool)
 testSystem addresses memValid = result
     where
     (procRespValid, procResp, memReqValid, memReq) = iCache (SNat @ 14) (SNat @ 12) (SNat @ 4) pseudoLRUReplacement cacheReq cacheAddress memRespValid memResp

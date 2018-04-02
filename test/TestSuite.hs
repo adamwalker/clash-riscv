@@ -30,7 +30,7 @@ import TestUtils
 type System dom = Vec (2 ^ 10) (BitVector 32) -> Signal dom Bool -> Signal dom ToDataMem
 
 --Pipeline + instruction memory + data memory. No caches.
-system :: HasClockReset dom sync gated => System dom
+system :: HiddenClockReset dom sync gated => System dom
 system program instrStall = toDataMem
     where
     --The instruction memory
@@ -44,7 +44,7 @@ system program instrStall = toDataMem
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> mux instrStall 0 instr_0 <*> instrStall) (FromDataMem <$> memReadData_3')
 
 --Pipeline + instruction cache + instruction memory + data memory. No data cache.
-systemWithCache :: forall dom sync gated. HasClockReset dom sync gated => System dom
+systemWithCache :: forall dom sync gated. HiddenClockReset dom sync gated => System dom
 systemWithCache program instrStall = toDataMem
     where
     lines :: Vec (2 ^ 6) (Vec 16 (BitVector 32))

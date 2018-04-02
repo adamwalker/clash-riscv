@@ -8,7 +8,7 @@ import RiscV.Encode.RV32I
 import Core.Pipeline
 import Prog
 
-system :: HasClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom ToDataMem
+system :: HiddenClockReset dom gated sync => Vec (2 ^ 10) (BitVector 32) -> Signal dom ToDataMem
 system program = register (errorX "X") toDataMem 
     where
     --The instruction memory
@@ -22,10 +22,10 @@ system program = register (errorX "X") toDataMem
     (toInstructionMem, toDataMem, _) = pipeline (FromInstructionMem <$> instr_0 <*> pure False) (FromDataMem <$> memReadData_3')
 
 {-# ANN topEntity
-  (defTop
+  (Synthesize
     { t_name   = "riscvPipeline"
     , t_inputs = [PortName "clk", PortName "rst"]
-    , t_output = PortField "res" [PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
+    , t_output = PortProduct "res" [PortName "readAddress", PortName "writeAddress", PortName "writeData", PortName "writeStrobe"]
     }) #-}
 topEntity :: Clock System Source -> Reset System Synchronous -> Signal System ToDataMem
 topEntity clk rst = withClockReset clk rst $ system ($(listToVecTH (P.map encodeInstr fib)) ++ repeat 0)
